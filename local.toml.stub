@@ -1,0 +1,31 @@
+Debug = true
+Port = ":6003"
+
+[Auth]
+Secret = ""
+
+[DB]
+Addr    = "192.168.99.106:30003"
+Name    = "app"
+User    = "appsrv"
+Secret  = "appsrvsecsec"
+
+[Oss]
+Endpoint    = "192.168.99.106:30006"
+Secure      = false
+Access      = "test"
+Secret      = "testtest"
+Bucket      = "dev"
+
+[Redis]
+Addr        = "192.168.99.106:30004"
+DB          = 0
+Password    = ""
+
+[Weapp]
+AppID   = ""
+Secret  = ""
+
+[Qapp]
+AppID   = ""
+Secret  = ""

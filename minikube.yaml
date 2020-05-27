@@ -1,0 +1,135 @@
+# minikube 内构建开发环境
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: appsrv
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgcm
+  namespace: appsrv
+  labels:
+    app: postgres
+data:
+  POSTGRES_DB: appsrv
+  POSTGRES_USER: appsrv
+  POSTGRES_PASSWORD: appsrvappsrv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg
+  namespace: appsrv
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - image: postgres:12.1
+        name: postgres
+        envFrom:
+          - configMapRef:
+              name: pgcm
+        ports:
+          - containerPort: 5432
+            name: postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgsvc
+  namespace: appsrv
+spec:
+  type: NodePort
+  ports:
+  - port: 5432
+    nodePort: 30010
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: appsrv
+  labels:
+    k8s-app: redis
+spec:
+  selector:
+    matchLabels:
+      k8s-app: redis
+  template:
+    metadata:
+      labels:
+        k8s-app: redis
+    spec:
+      containers:
+      - image: redis:5.0-alpine
+        name: redis
+        ports:
+        - containerPort: 6379
+          name: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: appsrv
+spec:
+  type: NodePort
+  ports:
+  - port: 6379
+    nodePort: 30011
+  selector:
+    k8s-app: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oss
+  namespace: appsrv
+spec:
+  selector:
+    matchLabels:
+      app: oss
+  template:
+    metadata:
+      labels:
+        app: oss
+    spec:
+      containers:
+      - image: minio/minio:RELEASE.2020-04-02T21-34-49Z
+        name: oss
+        args:
+        - server
+        - /data
+        ports:
+        - containerPort: 9000
+          name: oss-http
+        env:
+        - name: MINIO_ACCESS_KEY
+          value: "testtest"
+        - name: MINIO_SECRET_KEY
+          value: "testtesttesttest"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oss
+  namespace: appsrv
+spec:
+  type: NodePort
+  ports:
+  - port: 9000
+    nodePort: 30012
+  selector:
+    app: oss

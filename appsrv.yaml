@@ -1,0 +1,143 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appsrv
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: appsrv
+  template:
+    metadata:
+      labels:
+        k8s-app: appsrv
+    spec:
+      containers:
+      - image: app/appsrv
+        name: appsrv
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SERVERCONFIG_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: auth_secret
+        - name: SERVERCONFIG_DB_ADDR
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: database_addr
+        - name: SERVERCONFIG_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: database_name
+        - name: SERVERCONFIG_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: database_user
+        - name: SERVERCONFIG_DB_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: database_password
+        - name: SERVERCONFIG_REDIS_ADDR
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: redis_addr
+        - name: SERVERCONFIG_REDIS_DB
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: redis_db
+        - name: SERVERCONFIG_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: redis_password
+        - name: SERVERCONFIG_OSS_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: minio_endpoint
+        - name: SERVERCONFIG_OSS_SECURE
+          value: "true"
+        - name: SERVERCONFIG_OSS_ACCESS
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: minio_access
+        - name: SERVERCONFIG_OSS_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: minio_secret
+        - name: SERVERCONFIG_OSS_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: minio_bucket
+        - name: SERVERCONFIG_WEAPP_APPID
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: weapp_appid
+        - name: SERVERCONFIG_WEAPP_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: weapp_secret
+        - name: SERVERCONFIG_QAPP_APPID
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: qapp_appid
+        - name: SERVERCONFIG_QAPP_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: qapp_secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appsrv
+  namespace: app
+spec:
+  ports:
+  - port: 8080
+  selector:
+    k8s-app: appsrv
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: appsrv
+  namespace: app
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "acme-prod"
+spec:
+  tls:
+  - hosts:
+    - appsrv.example.com
+    secretName: appsrv
+  rules:
+  - host: appsrv.example.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: appsrv
+          servicePort: 8080
