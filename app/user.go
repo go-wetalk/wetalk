@@ -1,6 +1,7 @@
 package app
 
 import (
+	"appsrv/model"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/config"
@@ -15,27 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	// UserRemarkWechat 微信端用户标记
-	UserRemarkWechat = 1
-	// UserRemarkQQ QQ端用户标记
-	UserRemarkQQ = 2
-)
-
-type User struct {
-	ID        uint
-	Name      string
-	Phone     string
-	OpenID    string `pg:",unique"`
-	AvatarURL string
-	Gender    int  `pg:",default:1"`
-	Coin      int  `pg:",default:0"`
-	Remark    int8 `pg:",default:0"` // 账号来源标记
-
-	db.TimeUpdate
-}
-
-// ******** 控制器方法
+type User struct{}
 
 func (User) Create(w http.ResponseWriter, r *http.Request) {
 	u := User{}
@@ -100,7 +81,7 @@ func (User) AppWeappLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var u User
+	var u model.User
 	err = db.DB.Model(&u).Where("open_id = ?", res.OpenID).First()
 	if err != nil && pg.ErrNoRows != err {
 		bog.Error("User.AppWeappLogin", zap.Error(err), zap.String("OpenID", res.OpenID))
@@ -114,7 +95,7 @@ func (User) AppWeappLogin(w http.ResponseWriter, r *http.Request) {
 		u.Name = in.UserInfo.NickName
 		u.Gender = in.UserInfo.Gender
 		u.OpenID = res.OpenID
-		u.Remark = UserRemarkWechat
+		u.Remark = model.UserRemarkWechat
 		err = db.DB.Insert(&u)
 		if err != nil {
 			bog.Error("User.AppWeappLogin", zap.Error(err), zap.String("OpenID", res.OpenID))
@@ -165,7 +146,7 @@ func (User) AppWeappLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (User) AppStatus(w http.ResponseWriter, r *http.Request) {
-	var u User
+	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
 		w.WriteHeader(401)
@@ -224,7 +205,7 @@ func (User) AppQappLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var u User
+	var u model.User
 	err = db.DB.Model(&u).Where("open_id = ?", res.OpenID).First()
 	if err != nil && pg.ErrNoRows != err {
 		bog.Error("User.AppQappLogin", zap.Error(err), zap.String("OpenID", res.OpenID))
@@ -238,7 +219,7 @@ func (User) AppQappLogin(w http.ResponseWriter, r *http.Request) {
 		u.Name = in.UserInfo.NickName
 		u.Gender = in.UserInfo.Gender
 		u.OpenID = res.OpenID
-		u.Remark = UserRemarkQQ
+		u.Remark = model.UserRemarkQQ
 		err = db.DB.Insert(&u)
 		if err != nil {
 			bog.Error("User.AppQappLogin", zap.Error(err), zap.String("OpenID", res.OpenID))

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"appsrv/model"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
 	"net/http"
@@ -10,33 +11,17 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	TextSlotTerms    uint8 = 1 // 条款
-	TextSlotAnnounce uint8 = 2 // 公告
-	TextSlotNotice   uint8 = 3 // 提示
-)
-
-type Text struct {
-	ID       uint
-	Name     string
-	Slot     uint8
-	SlotName string `pg:",unique"`
-	Content  string
-
-	db.TimeUpdate
-}
-
-// ******** 控制器逻辑
+type Text struct{}
 
 func (Text) List(w http.ResponseWriter, r *http.Request) {
-	var ts = []Text{}
+	var ts = []model.Text{}
 	_ = db.DB.Model(&ts).Order("id ASC").Select()
 	muxie.Dispatch(w, muxie.JSON, &ts)
 }
 
 func (Text) Create(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Text
+		model.Text
 	}
 	err := muxie.Bind(r, muxie.JSON, &in)
 	if err != nil {
@@ -67,7 +52,7 @@ func (Text) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var t Text
+	var t model.Text
 	err = db.DB.Model(&t).Where("id = ?", muxie.GetParam(w, "textID")).First()
 	if err != nil {
 		w.WriteHeader(404)
@@ -85,7 +70,7 @@ func (Text) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (Text) AppView(w http.ResponseWriter, r *http.Request) {
-	var t Text
+	var t model.Text
 	textID := muxie.GetParam(w, "textID")
 	err := db.DB.Model(&t).Where("id = ? OR slot_name = ?", cast.ToUint(textID), textID).First()
 	if err != nil {

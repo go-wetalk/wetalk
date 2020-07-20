@@ -39,6 +39,11 @@ type user struct {
 	Gender    int  `pg:",default:1"`
 	Coin      int  `pg:",default:0"`
 	Remark    int8 `pg:",default:0"` // 账号来源标记
+	Street    string
+	City      string
+	Province  string
+	Region    string
+	Email     string `pg:",unique"`
 
 	db.TimeUpdate
 }

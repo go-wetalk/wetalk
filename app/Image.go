@@ -1,51 +1,23 @@
 package app
 
 import (
+	"appsrv/model"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
 	"appsrv/pkg/oss"
 	"appsrv/pkg/weapp"
-	"context"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/go-pg/pg/v9"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 )
 
-// Image 图片资源
-type Image struct {
-	ID    uint
-	Intro string `pg:",notnull"`
-	Path  string `pg:",notnull"`
-
-	db.TimeUpdate
-
-	Link string `pg:"-"`
-}
-
-var _ pg.AfterSelectHook = (*Image)(nil)
-
-func (i *Image) AfterSelect(c context.Context) error {
-	i.Link = i.ImageLink()
-	return nil
-}
-
-var _ pg.AfterScanHook = (*Image)(nil)
-
-func (i *Image) AfterScan(c context.Context) error {
-	i.Link = i.ImageLink()
-	return nil
-}
-
-func (i *Image) ImageLink() string {
-	return oss.Server + "/" + oss.Bucket + "/" + i.Path
-}
+type Image struct{}
 
 func (Image) PreSign(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -95,7 +67,7 @@ func (Image) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.DB.Insert(&Image{
+	err = db.DB.Insert(&model.Image{
 		Intro: in.Intro,
 		Path:  in.Path,
 	})
@@ -109,14 +81,14 @@ func (Image) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (Image) List(w http.ResponseWriter, r *http.Request) {
-	var is = []Image{}
+	var is = []model.Image{}
 	_ = db.DB.Model(&is).Column("id", "intro", "path").Select()
 	muxie.Dispatch(w, muxie.JSON, &is)
 }
 
 // AppWxaCodeView 查看小程序码，没有就生成
 func (Image) AppWxaCodeView(w http.ResponseWriter, r *http.Request) {
-	var u User
+	var u model.User
 	_ = auth.GetUser(r, &u)
 
 	path := fmt.Sprintf("%s?uid=%d", "pages/index/index", u.ID)
@@ -138,7 +110,7 @@ func (Image) AppWxaCodeView(w http.ResponseWriter, r *http.Request) {
 		path = fmt.Sprintf("%s?id=%d&uid=%d", "pages/market/detail", id, u.ID)
 	}
 
-	img := Image{}
+	img := model.Image{}
 	err := db.DB.Model(&img).Where("intro = ?", path).Order("id DESC").First()
 	if err == nil {
 		muxie.Dispatch(w, muxie.JSON, &struct{ Link string }{Link: img.ImageLink()})

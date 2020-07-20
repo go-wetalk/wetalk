@@ -1,6 +1,7 @@
 package app
 
 import (
+	"appsrv/model"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
@@ -10,18 +11,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type Role struct {
-	ID     uint
-	Key    string
-	Name   string
-	Intro  string
-	Admins []Admin `pg:"many2many:admin_roles,joinFK:role_id" json:"-"`
-}
+type Role struct{}
 
 func (Role) CheckRole(names ...string) muxie.Wrapper {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var u Admin
+			var u model.Admin
 			err := auth.GetUser(r, &u)
 			if err != nil {
 				w.WriteHeader(401)
@@ -50,7 +45,7 @@ func (Role) CheckRole(names ...string) muxie.Wrapper {
 }
 
 func (Role) List(w http.ResponseWriter, r *http.Request) {
-	var rs = []Role{}
+	var rs = []model.Role{}
 	err := db.DB.Model(&rs).Select()
 	if err != nil {
 		bog.Error("Role.List", zap.Error(err))

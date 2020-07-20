@@ -1,36 +1,19 @@
 package app
 
 import (
+	"appsrv/model"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
 	"appsrv/pkg/errors"
 	"net/http"
-	"time"
 
 	"github.com/kataras/muxie"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Admin struct {
-	ID       uint
-	Name     string
-	Password string `json:"-"`
-	Created  time.Time
-	Updated  time.Time
-	Deleted  *time.Time `pg:",soft_delete"`
-	Roles    []Role     `pg:"many2many:admin_roles,joinFK:admin_id"`
-}
-
-func (a *Admin) RoleList() (roles []Role) {
-	q := "select a.* from roles a join admin_roles b on b.admin_id = ? and b.role_id = a.id"
-	_, err := db.DB.Query(&roles, q, a.ID)
-	if err != nil {
-		bog.Error("Admin.RoleList", zap.Error(err))
-	}
-	return
-}
+type Admin struct{}
 
 func (Admin) Login(w http.ResponseWriter, r *http.Request) {
 	var cdt struct {
@@ -46,7 +29,7 @@ func (Admin) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var a Admin
+	var a model.Admin
 	err = db.DB.Model(&a).Where("name = ?", cdt.Username).Select()
 	if err != nil {
 		bog.Error("Admin.Login", zap.Error(err))
@@ -83,7 +66,7 @@ func (Admin) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (Admin) Profile(w http.ResponseWriter, r *http.Request) {
-	a := Admin{}
+	a := model.Admin{}
 	err := auth.GetUser(r, &a)
 	if err != nil {
 		bog.Error("Admin.Profile", zap.Error(err))
@@ -106,7 +89,7 @@ func (Admin) Profile(w http.ResponseWriter, r *http.Request) {
 
 func (Admin) Create(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Admin
+		model.Admin
 		Password string
 	}
 
@@ -142,7 +125,7 @@ func (Admin) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (Admin) List(w http.ResponseWriter, r *http.Request) {
-	var as = []Admin{}
+	var as = []model.Admin{}
 	err := db.DB.Model(&as).Select()
 	if err != nil {
 		bog.Error("Admin.List", zap.Error(err))
@@ -159,7 +142,7 @@ func (Admin) List(w http.ResponseWriter, r *http.Request) {
 
 func (Admin) Delete(w http.ResponseWriter, r *http.Request) {
 	id := muxie.GetParam(w, "id")
-	var a Admin
+	var a model.Admin
 	err := db.DB.Model(&a).Where("id = ?", id).First()
 	if err != nil {
 		bog.Error("Admin.Delete", zap.Error(err))
@@ -199,7 +182,7 @@ func (Admin) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var a Admin
+	var a model.Admin
 	err = auth.GetUser(r, &a)
 	if err != nil {
 		bog.Error("Admin.UpdatePassword", zap.Error(err))

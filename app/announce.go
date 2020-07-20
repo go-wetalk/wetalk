@@ -1,6 +1,7 @@
 package app
 
 import (
+	"appsrv/model"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
 	"net/http"
@@ -10,31 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	AnnounceSlotShop uint8 = 1 // 试题
-	AnnounceSlotH5   uint8 = 2 // H5页面
-	AnnounceSlotText uint8 = 3 // 文本公告
-)
-
-// Announce 首页 Banner
-type Announce struct {
-	ID        uint
-	Name      string
-	Show      *time.Time
-	Hide      *time.Time
-	Slot      uint8  // 根据 Slot 的值来决定行为
-	SlotID    uint   `pg:",default:0"`
-	SlotParam string // 文本参数就存这个字段，比如 wap 网页的地址
-	Seq       int    `pg:",default:0"`
-
-	db.LogoField
-	db.TimeUpdate
-}
-
-// ******** 控制器逻辑
+type Announce struct{}
 
 func (Announce) List(w http.ResponseWriter, r *http.Request) {
-	var as = []Announce{}
+	var as = []model.Announce{}
 	_ = db.DB.Model(&as).OrderExpr("seq DESC, id ASC").Select()
 	muxie.Dispatch(w, muxie.JSON, &as)
 }
@@ -61,7 +41,7 @@ func (Announce) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (Announce) Delete(w http.ResponseWriter, r *http.Request) {
-	var a Announce
+	var a model.Announce
 	err := db.DB.Model(&a).Where("id = ?", muxie.GetParam(w, "announceID")).First()
 	if err != nil {
 		w.WriteHeader(404)
@@ -77,7 +57,7 @@ func (Announce) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (Announce) AppList(w http.ResponseWriter, r *http.Request) {
 	t := time.Now()
-	as := []Announce{}
+	as := []model.Announce{}
 	_ = db.DB.Model(&as).Where("(show IS NULL OR show < ?) AND (hide IS NULL OR hide > ?)", t, t).OrderExpr("seq DESC, id ASC").Select()
 
 	var out = []struct {
