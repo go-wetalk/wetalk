@@ -20,10 +20,11 @@ type MsgType = string
 
 // 所有消息类型
 const (
-	MsgText  MsgType = "text"            // 文本消息类型
-	MsgImg           = "image"           // 图片消息类型
-	MsgCard          = "miniprogrampage" // 小程序卡片消息类型
-	MsgEvent         = "event"           // 事件类型
+	MsgText  MsgType = "text"                      // 文本消息类型
+	MsgImg           = "image"                     // 图片消息类型
+	MsgCard          = "miniprogrampage"           // 小程序卡片消息类型
+	MsgEvent         = "event"                     // 事件类型
+	MsgTrans         = "transfer_customer_service" // 转发客服消息
 )
 
 // EventType 事件类型
@@ -64,9 +65,9 @@ type Server struct {
 	aesKey   []byte // base64 解码后的消息加密密钥
 	validate bool   // 是否验证请求来自微信服务器
 
-	textMessageHandler                func(*TextMessageResult)
-	imageMessageHandler               func(*ImageMessageResult)
-	cardMessageHandler                func(*CardMessageResult)
+	textMessageHandler                func(*TextMessageResult) *TransferCustomerMessage
+	imageMessageHandler               func(*ImageMessageResult) *TransferCustomerMessage
+	cardMessageHandler                func(*CardMessageResult) *TransferCustomerMessage
 	userTempsessionEnterHandler       func(*UserTempsessionEnterResult)
 	mediaCheckAsyncHandler            func(*MediaCheckAsyncResult)
 	expressPathUpdateHandler          func(*ExpressPathUpdateResult)
@@ -92,17 +93,17 @@ type Server struct {
 }
 
 // OnCustomerServiceTextMessage add handler to handle customer text service message.
-func (srv *Server) OnCustomerServiceTextMessage(fn func(*TextMessageResult)) {
+func (srv *Server) OnCustomerServiceTextMessage(fn func(*TextMessageResult) *TransferCustomerMessage) {
 	srv.textMessageHandler = fn
 }
 
 // OnCustomerServiceImageMessage add handler to handle customer image service message.
-func (srv *Server) OnCustomerServiceImageMessage(fn func(*ImageMessageResult)) {
+func (srv *Server) OnCustomerServiceImageMessage(fn func(*ImageMessageResult) *TransferCustomerMessage) {
 	srv.imageMessageHandler = fn
 }
 
 // OnCustomerServiceCardMessage add handler to handle customer card service message.
-func (srv *Server) OnCustomerServiceCardMessage(fn func(*CardMessageResult)) {
+func (srv *Server) OnCustomerServiceCardMessage(fn func(*CardMessageResult) *TransferCustomerMessage) {
 	srv.cardMessageHandler = fn
 }
 
@@ -221,7 +222,7 @@ type dataType = string
 
 const (
 	dataTypeJSON dataType = "application/json"
-	dataTypeXML           = "application/xml"
+	dataTypeXML           = "text/xml"
 )
 
 // NewServer 返回经过初始化的Server
@@ -292,19 +293,20 @@ func (srv *Server) handleRequest(w http.ResponseWriter, r *http.Request, isEncrp
 		return nil, err
 	}
 	if isEncrpt { // 处理加密消息
+
+		query := r.URL.Query()
+		nonce, signature, timestamp := query.Get("nonce"), query.Get("signature"), query.Get("timestamp")
+
+		// 检验消息是否来自微信服务器
+		if !validateSignature(signature, srv.token, timestamp, nonce) {
+			return nil, errors.New("failed to validate signature")
+		}
+
 		res := new(EncryptedResult)
 		if err := unmarshal(raw, tp, res); err != nil {
 			return nil, err
 		}
 
-		nonce := getQuery(r, "nonce")
-		signature := getQuery(r, "msg_signature")
-		timestamp := getQuery(r, "timestamp")
-
-		// 检验消息的真实性
-		if !validateSignature(signature, srv.token, timestamp, nonce, res.Encrypt) {
-			return nil, errors.New("invalid signature")
-		}
 		body, err := srv.decryptMsg(res.Encrypt)
 		if err != nil {
 			return nil, err
@@ -325,7 +327,7 @@ func (srv *Server) handleRequest(w http.ResponseWriter, r *http.Request, isEncrp
 			return nil, err
 		}
 		if srv.textMessageHandler != nil {
-			srv.textMessageHandler(msg)
+			return srv.textMessageHandler(msg), nil
 		}
 
 	case MsgImg:
@@ -334,7 +336,7 @@ func (srv *Server) handleRequest(w http.ResponseWriter, r *http.Request, isEncrp
 			return nil, err
 		}
 		if srv.imageMessageHandler != nil {
-			srv.imageMessageHandler(msg)
+			return srv.imageMessageHandler(msg), nil
 		}
 
 	case MsgCard:
@@ -343,7 +345,7 @@ func (srv *Server) handleRequest(w http.ResponseWriter, r *http.Request, isEncrp
 			return nil, err
 		}
 		if srv.cardMessageHandler != nil {
-			srv.cardMessageHandler(msg)
+			return srv.cardMessageHandler(msg), nil
 		}
 	case MsgEvent:
 		switch res.Event {
@@ -559,34 +561,35 @@ func (srv *Server) Serve(w http.ResponseWriter, r *http.Request) error {
 				}
 			}
 
-			w.WriteHeader(200)
+			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", tp)
 			if _, err := w.Write(raw); err != nil {
+				return err
+			}
+		} else {
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8") // normal header
+			w.WriteHeader(http.StatusOK)
+			_, err = io.WriteString(w, "success")
+			if err != nil {
 				return err
 			}
 		}
 
 		return nil
 	case "GET":
-		echostr := getQuery(r, "echostr")
-		if srv.validate {
-
-			// 请求来自微信验证成功后原样返回 echostr 参数内容
-			if srv.validateServer(r) {
-				_, err := io.WriteString(w, echostr)
-				if err != nil {
-					return err
-				}
-
-				return nil
+		if srv.validate { // 请求来自微信验证成功后原样返回 echostr 参数内容
+			if !srv.validateServer(r) {
+				return errors.New("验证消息来自微信服务器失败")
 			}
 
-			return errors.New("request server is invalid")
-		}
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8") // normal header
+			w.WriteHeader(http.StatusOK)
 
-		_, err := io.WriteString(w, echostr)
-		if err != nil {
-			return err
+			echostr := r.URL.Query().Get("echostr")
+			_, err := io.WriteString(w, echostr)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -597,7 +600,7 @@ func (srv *Server) Serve(w http.ResponseWriter, r *http.Request) error {
 
 // 判断消息是否加密
 func isEncrypted(req *http.Request) bool {
-	return getQuery(req, "encrypt_type") == "aes"
+	return req.URL.Query().Get("encrypt_type") == "aes"
 }
 
 // 验证消息的确来自微信服务器
@@ -605,9 +608,10 @@ func isEncrypted(req *http.Request) bool {
 // 2.将三个参数字符串拼接成一个字符串进行sha1加密
 // 3.开发者获得加密后的字符串可与signature对比，标识该请求来源于微信
 func (srv *Server) validateServer(req *http.Request) bool {
-	nonce := getQuery(req, "nonce")
-	signature := getQuery(req, "signature")
-	timestamp := getQuery(req, "timestamp")
+	query := req.URL.Query()
+	nonce := query.Get("nonce")
+	signature := query.Get("signature")
+	timestamp := query.Get("timestamp")
 
 	return validateSignature(signature, nonce, timestamp, srv.token)
 }
