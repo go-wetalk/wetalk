@@ -30,4 +30,6 @@ type tag struct {
 	ID        uint
 	Name      string
 	CreatorID uint
+
+	db.TimeUpdate
 }
