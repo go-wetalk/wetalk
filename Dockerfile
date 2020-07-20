@@ -1,3 +1,6 @@
+##################################
+# Build binary from source code. #
+##################################
 FROM golang:1.14-alpine AS rushb
 
 WORKDIR /app
@@ -6,9 +9,12 @@ COPY . /app
 
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -mod vendor -gcflags "-l -w" -o appsrv
 
-FROM alpine:3.11
+################################
+# Build runtime container.     #
+################################
+FROM alpine:3.11 as runtime
 
-LABEL maintainer="unknow"
+LABEL maintainer="unknown"
 LABEL k8s-app="appsrv"
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
@@ -23,6 +29,6 @@ COPY --from=rushb /app/appsrv /app/appsrv
 
 EXPOSE 8080
 
-CMD [ "/app/appsrv" ]
-
 ENTRYPOINT [ "/app/appsrv" ]
+
+CMD [ "serve" ]

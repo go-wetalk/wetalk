@@ -1,4 +1,4 @@
-package main
+package route
 
 import (
 	"appsrv/app"
@@ -8,7 +8,8 @@ import (
 	"github.com/kataras/muxie"
 )
 
-func initAppServerV1(v1 muxie.SubMux) {
+// SetupAppServerV1 setup user-end routes.
+func SetupAppServerV1(v1 muxie.SubMux) {
 	{
 		v1.Handle("/vauth/weapp", muxie.Methods().
 			HandleFunc(http.MethodPost, app.User{}.AppWeappLogin))

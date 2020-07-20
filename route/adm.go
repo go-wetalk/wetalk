@@ -1,4 +1,4 @@
-package main
+package route
 
 import (
 	"appsrv/app"
@@ -8,7 +8,8 @@ import (
 	"github.com/kataras/muxie"
 )
 
-func initAdminServerV1(v1 muxie.SubMux) {
+// SetupAdminServerV1 setup admin routes.
+func SetupAdminServerV1(v1 muxie.SubMux) {
 	guard := muxie.Pre(auth.Guard("admin", false))
 	checkRoleRoot := muxie.Pre(app.Role{}.CheckRole("root"))
 	checkForUser := muxie.Pre(app.Role{}.CheckRole("root", "user"))              // 管理用户
