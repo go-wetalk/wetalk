@@ -32,7 +32,7 @@ func init() {
 
 type user struct {
 	ID        uint
-	Name      string `pg:",notnull"`
+	Name      string `pg:",notnull,unique"`
 	Phone     string
 	OpenID    string `pg:",unique"`
 	AvatarURL string
@@ -44,6 +44,7 @@ type user struct {
 	Province  string
 	Region    string
 	Email     string `pg:",unique"`
+	Password  string
 
 	db.TimeUpdate
 }

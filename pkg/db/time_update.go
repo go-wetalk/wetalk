@@ -8,7 +8,7 @@ import (
 )
 
 type TimeUpdate struct {
-	Created time.Time  `pg:",default:now()"`
+	Created time.Time  `pg:",default:now(),index"`
 	Updated time.Time  `pg:",default:now()"`
 	Deleted *time.Time `pg:",soft_delete"`
 }

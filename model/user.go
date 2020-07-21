@@ -1,6 +1,8 @@
 package model
 
-import "appsrv/pkg/db"
+import (
+	"appsrv/pkg/db"
+)
 
 const (
 	// UserRemarkWechat 微信端用户标记
@@ -11,13 +13,19 @@ const (
 
 type User struct {
 	ID        uint
-	Name      string
+	Name      string `pg:",notnull"`
 	Phone     string
 	OpenID    string `pg:",unique"`
 	AvatarURL string
 	Gender    int  `pg:",default:1"`
 	Coin      int  `pg:",default:0"`
 	Remark    int8 `pg:",default:0"` // 账号来源标记
+	Street    string
+	City      string
+	Province  string
+	Region    string
+	Email     string `pg:",unique"`
+	Password  string
 
 	db.TimeUpdate
 }

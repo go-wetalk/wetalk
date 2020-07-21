@@ -4,9 +4,13 @@ import (
 	"appsrv/model"
 	"appsrv/pkg/config"
 	"appsrv/pkg/errors"
+	"appsrv/schema"
+	"strings"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/laeo/qapp"
 	"github.com/medivhzhan/weapp/v2"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct{}
@@ -24,35 +28,21 @@ func (User) List(db *pg.DB) ([]model.User, error) {
 	return users, err
 }
 
-// UserLoginByWeappInput 微信小程序登录参数
-type UserLoginByWeappInput struct {
-	Code          string `validate:"required" json:"code"`
-	EncryptedData string `validate:"required" json:"encrypted_data"`
-	IV            string `validate:"required" json:"iv"`
-	RawData       string `validate:"required" json:"raw_data"`
-	Signature     string `validate:"required" json:"signature"`
-	UserInfo      struct {
-		AvatarURL string `json:"avatarUrl"`
-		NickName  string `json:"nickName"`
-		Gender    int    `json:"gender"`
-	} `validate:"required" json:"user_info"`
-}
-
 // LoginByWeapp 使用微信小程序进行登录
-func (User) LoginByWeapp(db *pg.DB, input UserLoginByWeappInput) (*model.User, error) {
-	res, err := weapp.Login(config.Server.Weapp.AppID, config.Server.Weapp.Secret, input.Code)
+func (User) LoginByWeapp(db *pg.DB, conf config.WeappConfig, input schema.UserLoginByWeappInput) (*model.User, error) {
+	res, err := weapp.Login(conf.AppID, conf.Secret, input.Code)
 	if err != nil {
-		return nil, errors.JSONError{Code: 500, Msg: err.Error()}
+		return nil, errors.New(500, err.Error())
 	}
 
 	if err = res.GetResponseError(); err != nil {
-		return nil, errors.JSONError{Code: 500, Msg: err.Error()}
+		return nil, errors.New(500, err.Error())
 	}
 
 	var u model.User
 	err = db.Model(&u).Where("open_id = ?", res.OpenID).First()
 	if err != nil && pg.ErrNoRows != err {
-		return nil, errors.JSONError{Code: 500, Msg: err.Error()}
+		return nil, errors.New(500, err.Error())
 	}
 
 	if err != nil && pg.ErrNoRows == err {
@@ -64,14 +54,82 @@ func (User) LoginByWeapp(db *pg.DB, input UserLoginByWeappInput) (*model.User, e
 		u.Remark = model.UserRemarkWechat
 		err = db.Insert(&u)
 		if err != nil {
-			return nil, errors.JSONError{Code: 500, Msg: err.Error()}
+			return nil, errors.New(500, err.Error())
 		}
 	}
 
 	u.AvatarURL = input.UserInfo.AvatarURL
 	_, err = db.Model(&u).Set("avatar_url = ?", u.AvatarURL).WherePK().Update()
 	if err != nil {
-		return nil, errors.JSONError{Code: 500, Msg: err.Error()}
+		return nil, errors.New(500, err.Error())
+	}
+
+	return &u, nil
+}
+
+// LoginByQapp QQ小程序登录
+func LoginByQapp(db *pg.DB, conf config.QappConfig, input schema.UserLoginByQappInput) (*model.User, error) {
+	appid := conf.AppID
+	secret := conf.Secret
+	res, err := qapp.Login(appid, secret, input.Code)
+	if err != nil {
+		return nil, errors.New(500, err.Error())
+	}
+
+	if err := res.GetResponseError(); err != nil {
+		return nil, errors.New(500, err.Error())
+	}
+
+	var u model.User
+	err = db.Model(&u).Where("open_id = ?", res.OpenID).First()
+	if err != nil && pg.ErrNoRows != err {
+		return nil, errors.New(500, err.Error())
+	}
+
+	if err != nil && pg.ErrNoRows == err {
+		// 创建用户
+		u.AvatarURL = input.UserInfo.AvatarURL
+		u.Name = input.UserInfo.NickName
+		u.Gender = input.UserInfo.Gender
+		u.OpenID = res.OpenID
+		u.Remark = model.UserRemarkQQ
+		err = db.Insert(&u)
+		if err != nil {
+			return nil, errors.New(500, err.Error())
+		}
+	}
+
+	u.AvatarURL = input.UserInfo.AvatarURL
+	_, err = db.Model(&u).Set("avatar_url = ?", u.AvatarURL).WherePK().Update()
+	if err != nil {
+		return nil, errors.New(500, err.Error())
+	}
+
+	return &u, nil
+}
+
+// SignByCredential 账号注册
+func (User) SignByCredential(db *pg.DB, input schema.UserSignByCredentialInput) (*model.User, error) {
+	var u model.User
+	n, err := db.Model(&u).Where("name = ?", strings.ToLower(input.Username)).Count()
+	if err != nil {
+		return nil, errors.New(500, err.Error())
+	}
+
+	if n > 0 {
+		return nil, errors.New(409, "该名称已被使用")
+	}
+
+	p, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, errors.New(500, "网络通信错误请重试")
+	}
+
+	u.Name = input.Username
+	u.Password = string(p)
+	err = db.Insert(&u)
+	if err != nil {
+		return nil, errors.New(500, "网络通信错误请重试")
 	}
 
 	return &u, nil

@@ -11,6 +11,8 @@ func init() {
 	Setup(5, func(db *pg.DB, l *zap.Logger) error {
 		createTable(
 			&topic{},
+			&tag{},
+			&comment{},
 		)
 		return nil
 	})
@@ -30,6 +32,16 @@ type tag struct {
 	ID        uint
 	Name      string
 	CreatorID uint
+
+	db.TimeUpdate
+}
+
+type comment struct {
+	ID        uint
+	TopicID   uint
+	UserID    uint
+	CommentID uint `pg:",default:0"`
+	Content   string
 
 	db.TimeUpdate
 }
