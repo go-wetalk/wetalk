@@ -69,12 +69,7 @@ func (Admin) Profile(w http.ResponseWriter, r *http.Request) {
 	a := model.Admin{}
 	err := auth.GetUser(r, &a)
 	if err != nil {
-		bog.Error("Admin.Profile", zap.Error(err))
-		w.WriteHeader(401)
-		muxie.Dispatch(w, muxie.JSON, errors.JSONError{
-			Code: 401,
-			Msg:  err.Error(),
-		})
+		muxie.Dispatch(w, muxie.JSON, errors.New(401, err.Error()))
 		return
 	}
 
@@ -175,10 +170,7 @@ func (Admin) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if in.NewPwd != in.Confirm {
-		muxie.Dispatch(w, muxie.JSON, errors.JSONError{
-			Code: 400,
-			Msg:  "新密码输入不一致",
-		})
+		muxie.Dispatch(w, muxie.JSON, errors.New(400, "新密码输入不一致"))
 		return
 	}
 
@@ -192,10 +184,7 @@ func (Admin) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(in.OldPwd))
 	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, errors.JSONError{
-			Code: 400,
-			Msg:  "密码错误",
-		})
+		muxie.Dispatch(w, muxie.JSON, errors.New(400, "密码错误"))
 		return
 	}
 
@@ -209,8 +198,5 @@ func (Admin) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	AdminLog{}.LogEvent(r, &a, "password", "修改密码")
 
-	muxie.Dispatch(w, muxie.JSON, errors.JSONError{
-		Code: 200,
-		Msg:  "修改成功",
-	})
+	muxie.Dispatch(w, muxie.JSON, errors.New(200, "修改成功"))
 }
