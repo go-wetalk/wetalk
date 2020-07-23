@@ -26,6 +26,7 @@ func createServeAppCommand() *cobra.Command {
 					w.Header().Add("Access-Control-Max-Age", "600")
 					w.Header().Add("Access-Control-Expose-Headers", "X-Refresh-Token")
 					w.Header().Add("Vary", "Origin")
+					w.Header().Add("Access-Control-Allow-Credentials", "true")
 					if r.Method == http.MethodOptions {
 						w.WriteHeader(200)
 					} else {

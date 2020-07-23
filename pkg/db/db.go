@@ -1,9 +1,9 @@
 package db
 
 import (
-	"appsrv/pkg/bog"
 	"appsrv/pkg/config"
 	"context"
+	"fmt"
 
 	"github.com/go-pg/pg/v9"
 )
@@ -15,7 +15,7 @@ func (d dbLogger) BeforeQuery(c context.Context, q *pg.QueryEvent) (context.Cont
 }
 func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) error {
 	sql, _ := q.FormattedQuery()
-	bog.Debug(sql)
+	fmt.Println(sql)
 	return nil
 }
 
