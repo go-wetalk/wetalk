@@ -45,6 +45,7 @@ type user struct {
 	Region    string
 	Email     string `pg:",unique"`
 	Password  string
+	Sign      string
 
 	db.TimeUpdate
 }

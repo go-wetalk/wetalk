@@ -42,4 +42,14 @@ func (Topic) Create(w http.ResponseWriter, r *http.Request) {
 		muxie.Dispatch(w, muxie.JSON, err)
 	}
 
+	if err = input.Validate(); err != nil {
+		muxie.Dispatch(w, muxie.JSON, err)
+	}
+
+	t, err := service.Topic{}.Create(db.DB, u, input)
+	if err != nil {
+		muxie.Dispatch(w, muxie.JSON, err)
+	}
+
+	muxie.Dispatch(w, muxie.JSON, t)
 }
