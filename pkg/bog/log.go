@@ -9,15 +9,13 @@ import (
 
 var Log *zap.Logger
 
-func InitLog() error {
+func init() {
 	c := zapcore.NewCore(
 		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
 		zapcore.AddSync(os.Stdout),
 		zap.DebugLevel)
 
 	Log = zap.New(c, zap.AddStacktrace(zap.ErrorLevel))
-
-	return nil
 }
 
 // Named adds a new path segment to the logger's name. Segments are joined by
