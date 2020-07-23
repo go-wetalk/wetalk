@@ -1,6 +1,6 @@
 package schema
 
-import validation "github.com/go-ozzo/ozzo-validation"
+import validation "github.com/go-ozzo/ozzo-validation/v4"
 
 type TopicListInput struct {
 	Page uint
