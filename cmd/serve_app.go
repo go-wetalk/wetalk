@@ -34,7 +34,7 @@ func createServeAppCommand() *cobra.Command {
 				})
 			})
 
-			route.SetupAppServerV1(m.Of("/app/v1"))
+			route.SetupAppServerV1(m.Of("/v1"))
 
 			if config.Server.Port == "" {
 				config.Server.Port = ":8080"

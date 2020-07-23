@@ -34,7 +34,7 @@ func createServeAdminCommand() *cobra.Command {
 				})
 			})
 
-			route.SetupAdminServerV1(m.Of("/adm/v1"))
+			route.SetupAdminServerV1(m.Of("/v1"))
 
 			if config.Server.Port == "" {
 				config.Server.Port = ":8080"
