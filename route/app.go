@@ -16,11 +16,15 @@ func SetupAppServerV1(v1 muxie.SubMux) {
 		v1.Handle("/vauth/qapp", muxie.Methods().
 			HandleFunc(http.MethodPost, app.User{}.AppQappLogin))
 
+		v1.Handle("/vauth/signup", muxie.Methods().HandleFunc(http.MethodPost, app.User{}.SignUp))
+
 		v1.Handle("/announces", muxie.Methods().HandleFunc(http.MethodGet, app.Announce{}.AppList))
 
 		v1.Handle("/texts/:textID", muxie.Methods().HandleFunc(http.MethodGet, app.Text{}.AppView))
 
-		v1.Handle("/topics", muxie.Methods().HandleFunc(http.MethodGet, app.Topic{}.List))
+		v1.Handle("/topics", muxie.Methods().
+			HandleFunc(http.MethodGet, app.Topic{}.List).
+			HandleFunc(http.MethodPost, app.Topic{}.Create))
 	}
 
 	guard := muxie.Pre(auth.Guard("app", false))

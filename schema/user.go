@@ -1,5 +1,7 @@
 package schema
 
+import validation "github.com/go-ozzo/ozzo-validation/v4"
+
 // UserLoginByWeappInput 微信小程序登录参数
 type UserLoginByWeappInput struct {
 	Code          string `validate:"required" json:"code"`
@@ -28,11 +30,18 @@ type UserLoginByQappInput struct {
 	} `validate:"required" json:"user_info"`
 }
 
-// UserSignByCredentialInput 账号密码登录
-type UserSignByCredentialInput struct {
+// UserSignUpInput 账号密码登录
+type UserSignUpInput struct {
 	Username string
 	Password string
 	Captcha  string
+}
+
+func (v UserSignUpInput) Validate() error {
+	return validation.ValidateStruct(&v,
+		validation.Field(&v.Username, validation.Required.Error("请输入用户名"), validation.RuneLength(1, 12).Error("用户名限制12个字符")),
+		validation.Field(&v.Password, validation.Required.Error("请设置密码"), validation.RuneLength(6, 32).Error("密码长度限制6到32个字符")),
+	)
 }
 
 type UserSignOutput struct {

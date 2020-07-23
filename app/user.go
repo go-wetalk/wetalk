@@ -162,11 +162,17 @@ func (User) AppQappLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (User) AppSignByCredential(w http.ResponseWriter, r *http.Request) {
-	var input schema.UserSignByCredentialInput
+func (User) SignUp(w http.ResponseWriter, r *http.Request) {
+	var input schema.UserSignUpInput
 	err := muxie.Bind(r, muxie.JSON, &input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, errors.ErrBodyBind)
+		return
+	}
+
+	if err = input.Validate(); err != nil {
+		w.WriteHeader(400)
+		muxie.Dispatch(w, muxie.JSON, err)
 		return
 	}
 

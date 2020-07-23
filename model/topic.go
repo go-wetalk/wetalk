@@ -10,4 +10,6 @@ type Topic struct {
 	Tags    []Tag `pg:",many2many:topic_tag"`
 
 	db.TimeUpdate
+
+	User *User
 }

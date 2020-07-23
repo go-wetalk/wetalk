@@ -109,7 +109,7 @@ func LoginByQapp(db *pg.DB, conf config.QappConfig, input schema.UserLoginByQapp
 }
 
 // SignByCredential 账号注册
-func (User) SignByCredential(db *pg.DB, input schema.UserSignByCredentialInput) (*model.User, error) {
+func (User) SignByCredential(db *pg.DB, input schema.UserSignUpInput) (*model.User, error) {
 	var u model.User
 	n, err := db.Model(&u).Where("name = ?", strings.ToLower(input.Username)).Count()
 	if err != nil {
