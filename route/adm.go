@@ -1,6 +1,7 @@
 package route
 
 import (
+	"appsrv/admin"
 	"appsrv/app"
 	"appsrv/pkg/auth"
 	"net/http"
@@ -28,23 +29,23 @@ func SetupAdminServerV1(v1 muxie.SubMux) {
 				Handle(http.MethodGet, checkForUserRO.ForFunc(app.User{}.List)))
 
 		v1.Handle("/tokens", muxie.Methods().
-			HandleFunc(http.MethodPost, app.Admin{}.Login))
+			HandleFunc(http.MethodPost, admin.Admin{}.Login))
 
 		v1.Handle("/profile", muxie.Methods().
-			Handle(http.MethodGet, guard.ForFunc(app.Admin{}.Profile)))
+			Handle(http.MethodGet, guard.ForFunc(admin.Admin{}.Profile)))
 
 		v1.Handle("/admins", muxie.Methods().
-			Handle(http.MethodGet, checkRoleRoot.ForFunc(app.Admin{}.List)).
-			Handle(http.MethodPost, checkRoleRoot.ForFunc(app.Admin{}.Create)))
+			Handle(http.MethodGet, checkRoleRoot.ForFunc(admin.Admin{}.List)).
+			Handle(http.MethodPost, checkRoleRoot.ForFunc(admin.Admin{}.Create)))
 
-		v1.Handle("/admins/:id", muxie.Methods().Handle(http.MethodDelete, checkRoleRoot.ForFunc(app.Admin{}.Delete)))
+		v1.Handle("/admins/:id", muxie.Methods().Handle(http.MethodDelete, checkRoleRoot.ForFunc(admin.Admin{}.Delete)))
 
 		v1.Handle("/roles", muxie.Methods().
 			Handle(http.MethodGet, checkRoleRoot.ForFunc(app.Role{}.List)))
 
-		v1.Handle("/admin-logs", muxie.Methods().Handle(http.MethodGet, checkRoleRoot.ForFunc(app.AdminLog{}.List)))
+		v1.Handle("/admin-logs", muxie.Methods().Handle(http.MethodGet, checkRoleRoot.ForFunc(admin.AdminLog{}.List)))
 
-		v1.Handle("/password", muxie.Methods().Handle(http.MethodPut, guard.ForFunc(app.Admin{}.UpdatePassword)))
+		v1.Handle("/password", muxie.Methods().Handle(http.MethodPut, guard.ForFunc(admin.Admin{}.UpdatePassword)))
 
 		v1.Handle("/texts", muxie.Methods().
 			Handle(http.MethodGet, checkForTextRO.ForFunc(app.Text{}.List)).
