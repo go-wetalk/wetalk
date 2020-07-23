@@ -6,6 +6,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
+	github.com/go-ozzo/ozzo-validation/v4 v4.2.1
 	github.com/go-pg/pg/v9 v9.1.6
 	github.com/go-pg/urlstruct v0.5.0 // indirect
 	github.com/go-redis/cache/v7 v7.0.2

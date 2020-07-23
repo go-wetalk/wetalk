@@ -1,6 +1,8 @@
 package app
 
 import (
+	"appsrv/model"
+	"appsrv/pkg/auth"
 	"appsrv/pkg/db"
 	"appsrv/schema"
 	"appsrv/service"
@@ -23,4 +25,21 @@ func (Topic) List(w http.ResponseWriter, r *http.Request) {
 
 	ts, _ := service.Topic{}.ListWithRankByScore(db.DB, input)
 	muxie.Dispatch(w, muxie.JSON, ts)
+}
+
+// Create 创建话题
+func (Topic) Create(w http.ResponseWriter, r *http.Request) {
+	var u model.User
+	err := auth.GetUser(r, &u)
+	if err != nil {
+		w.WriteHeader(401)
+		return
+	}
+
+	var input schema.TopicCreateInput
+	err = muxie.Bind(r, muxie.JSON, &input)
+	if err != nil {
+		muxie.Dispatch(w, muxie.JSON, err)
+	}
+
 }
