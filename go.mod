@@ -14,7 +14,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/jinzhu/now v1.1.1
 	github.com/json-iterator/go v1.1.10 // indirect
-	github.com/kataras/muxie v1.0.9
+	github.com/kataras/muxie v1.1.0
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/koding/multiconfig v0.0.0-20171124222453-69c27309b2d7
 	github.com/laeo/qapp v0.0.0-20200502160927-5198b1938446
@@ -30,7 +30,7 @@ require (
 	github.com/vmihailenco/msgpack/v4 v4.3.12
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
-	golang.org/x/image v0.0.0-20200430140353-33d19683fad8
+	golang.org/x/image v0.0.0-20200618115811-c13761719519
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	gopkg.in/ini.v1 v1.57.0 // indirect
