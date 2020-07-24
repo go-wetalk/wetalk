@@ -16,9 +16,6 @@ func SetupAppServerV1(v1 muxie.SubMux) {
 		v1.Handle("/announces", muxie.Methods().HandleFunc(http.MethodGet, app.Announce{}.AppList))
 
 		v1.Handle("/texts/:textID", muxie.Methods().HandleFunc(http.MethodGet, app.Text{}.AppView))
-
-		v1.Handle("/topics", muxie.Methods().
-			HandleFunc(http.MethodGet, app.Topic{}.List))
 	}
 
 	guard := muxie.Pre(auth.Guard("app", false))
@@ -26,6 +23,7 @@ func SetupAppServerV1(v1 muxie.SubMux) {
 		v1.Handle("/status", muxie.Methods().Handle(http.MethodGet, guard.ForFunc(app.User{}.AppStatus)))
 
 		v1.Handle("/topics", muxie.Methods().
+			HandleFunc(http.MethodGet, app.Topic{}.List).
 			Handle(http.MethodPost, guard.ForFunc(app.Topic{}.Create)))
 
 		v1.Handle("/tasks", muxie.Methods().
