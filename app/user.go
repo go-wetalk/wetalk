@@ -3,8 +3,6 @@ package app
 import (
 	"appsrv/model"
 	"appsrv/pkg/auth"
-	"appsrv/pkg/bog"
-	"appsrv/pkg/config"
 	"appsrv/pkg/db"
 	"appsrv/pkg/errors"
 	"appsrv/schema"
@@ -12,83 +10,9 @@ import (
 	"net/http"
 
 	"github.com/kataras/muxie"
-	"go.uber.org/zap"
 )
 
 type User struct{}
-
-func (User) Create(w http.ResponseWriter, r *http.Request) {
-	input := service.UserCreateInput{}
-	err := muxie.Bind(r, muxie.JSON, &input)
-	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, errors.ErrBodyBind)
-		return
-	}
-
-	u, err := service.User{}.Create(db.DB, input)
-	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, err)
-		return
-	}
-
-	muxie.Dispatch(w, muxie.JSON, u)
-}
-
-func (User) List(w http.ResponseWriter, r *http.Request) {
-	users, err := service.User{}.List(db.DB)
-	if err != nil {
-		bog.Error("User.List", zap.Error(err))
-	}
-	muxie.Dispatch(w, muxie.JSON, users)
-}
-
-func (User) AppWeappLogin(w http.ResponseWriter, r *http.Request) {
-	var in schema.UserLoginByWeappInput
-	err := muxie.Bind(r, muxie.JSON, &in)
-	if err != nil {
-		w.WriteHeader(400)
-		return
-	}
-
-	u, err := service.User{}.LoginByWeapp(db.DB, config.Server.Weapp, in)
-	if err != nil {
-		bog.Error("User.AppWeappLogin", zap.Error(err))
-		w.WriteHeader(err.(errors.JSONError).Code)
-		return
-	}
-
-	token, err := auth.Token("app", u.ID)
-	if err != nil {
-		bog.Error("User.AppWeappLogin", zap.Error(err))
-		w.WriteHeader(500)
-		return
-	}
-
-	var out struct {
-		Token string
-		User  struct {
-			ID        uint
-			Name      string
-			AvatarURL string
-			Gender    int
-			Created   string
-			Coin      int
-		}
-	}
-	out.Token = token
-	out.User.ID = u.ID
-	out.User.Name = u.Name
-	out.User.AvatarURL = u.AvatarURL
-	out.User.Gender = u.Gender
-	out.User.Created = u.Created.Format("2006-01-02 15:04:05")
-
-	err = muxie.Dispatch(w, muxie.JSON, &out)
-	if err != nil {
-		bog.Error("User.AppWeappLogin", zap.Error(err), zap.Uint("UID", u.ID))
-		w.WriteHeader(500)
-		return
-	}
-}
 
 func (User) AppStatus(w http.ResponseWriter, r *http.Request) {
 	var u model.User
@@ -99,73 +23,27 @@ func (User) AppStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var out = struct {
-		ID        uint
-		Name      string
-		AvatarURL string
-		Gender    int
-		Coin      int
+		ID     uint
+		Name   string
+		Logo   string
+		Gender int
+		Coin   int
 	}{
-		ID:        u.ID,
-		Name:      u.Name,
-		AvatarURL: u.AvatarURL,
-		Gender:    u.Gender,
-		Coin:      u.Coin,
+		ID:     u.ID,
+		Name:   u.Name,
+		Logo:   u.Logo,
+		Gender: u.Gender,
+		Coin:   u.Coin,
 	}
 
 	muxie.Dispatch(w, muxie.JSON, &out)
-}
-
-func (User) AppQappLogin(w http.ResponseWriter, r *http.Request) {
-	var in schema.UserLoginByQappInput
-	err := muxie.Bind(r, muxie.JSON, &in)
-	if err != nil {
-		w.WriteHeader(400)
-		return
-	}
-
-	u, err := service.LoginByQapp(db.DB, config.Server.Qapp, in)
-	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, err.(errors.JSONError))
-		return
-	}
-
-	token, err := auth.Token("app", u.ID)
-	if err != nil {
-		bog.Error("User.AppQappLogin", zap.Error(err), zap.String("OpenID", u.OpenID))
-		w.WriteHeader(500)
-		return
-	}
-
-	var out struct {
-		Token string
-		User  struct {
-			ID        uint
-			Name      string
-			AvatarURL string
-			Gender    int
-			Created   string
-			Coin      int
-		}
-	}
-	out.Token = token
-	out.User.ID = u.ID
-	out.User.Name = u.Name
-	out.User.AvatarURL = u.AvatarURL
-	out.User.Gender = u.Gender
-	out.User.Created = u.Created.Format("2006-01-02 15:04:05")
-
-	err = muxie.Dispatch(w, muxie.JSON, &out)
-	if err != nil {
-		bog.Error("User.AppQappLogin", zap.Error(err), zap.Uint("UID", u.ID))
-		w.WriteHeader(500)
-		return
-	}
 }
 
 func (User) SignUp(w http.ResponseWriter, r *http.Request) {
 	var input schema.UserSignUpInput
 	err := muxie.Bind(r, muxie.JSON, &input)
 	if err != nil {
+		w.WriteHeader(429)
 		muxie.Dispatch(w, muxie.JSON, errors.ErrBodyBind)
 		return
 	}
@@ -176,40 +54,36 @@ func (User) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := service.User{}.SignByCredential(db.DB, input)
+	u, err := service.User{}.CreateWithInput(db.DB, input)
 	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, err.(errors.JSONError))
+		w.WriteHeader(500)
+		muxie.Dispatch(w, muxie.JSON, err)
 		return
 	}
 
 	token, err := auth.Token("app", u.ID)
 	if err != nil {
-		bog.Error("User.AppQappLogin", zap.Error(err), zap.String("OpenID", u.OpenID))
 		w.WriteHeader(500)
+		muxie.Dispatch(w, muxie.JSON, errors.New(500, "网络链接波动请重试"))
 		return
 	}
 
 	var out struct {
 		Token string
 		User  struct {
-			ID        uint
-			Name      string
-			AvatarURL string
-			Gender    int
-			Created   string
-			Coin      int
+			ID      uint
+			Name    string
+			Logo    string
+			Gender  int
+			Created string
+			Coin    int
 		}
 	}
 	out.Token = token
 	out.User.ID = u.ID
 	out.User.Name = u.Name
-	out.User.AvatarURL = u.AvatarURL
+	out.User.Logo = u.Logo
 	out.User.Gender = u.Gender
 	out.User.Created = u.Created.Format("2006-01-02 15:04:05")
-
-	err = muxie.Dispatch(w, muxie.JSON, &out)
-	if err != nil {
-		w.WriteHeader(500)
-		return
-	}
+	muxie.Dispatch(w, muxie.JSON, out)
 }

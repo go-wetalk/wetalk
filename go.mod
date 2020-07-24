@@ -17,7 +17,6 @@ require (
 	github.com/kataras/muxie v1.1.0
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/koding/multiconfig v0.0.0-20171124222453-69c27309b2d7
-	github.com/laeo/qapp v0.0.0-20200502160927-5198b1938446
 	github.com/medivhzhan/weapp/v2 v2.2.1
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -28,6 +27,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vmihailenco/msgpack/v4 v4.3.12
+	github.com/xeonx/timeago v1.0.0-rc4
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/image v0.0.0-20200618115811-c13761719519

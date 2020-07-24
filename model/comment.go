@@ -10,4 +10,8 @@ type Comment struct {
 	Content   string
 
 	db.TimeUpdate
+
+	User    *User
+	Topic   *Topic
+	Comment *Comment
 }

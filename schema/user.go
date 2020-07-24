@@ -2,6 +2,12 @@ package schema
 
 import validation "github.com/go-ozzo/ozzo-validation/v4"
 
+type User struct {
+	ID   uint
+	Name string
+	Logo string
+}
+
 // UserLoginByWeappInput 微信小程序登录参数
 type UserLoginByWeappInput struct {
 	Code          string `validate:"required" json:"code"`

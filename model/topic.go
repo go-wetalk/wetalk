@@ -1,6 +1,10 @@
 package model
 
-import "appsrv/pkg/db"
+import (
+	"appsrv/pkg/db"
+
+	"github.com/go-pg/pg/v9"
+)
 
 type Topic struct {
 	ID      uint
@@ -11,5 +15,13 @@ type Topic struct {
 
 	db.TimeUpdate
 
-	User *User
+	User     *User
+	Comments []Comment
+}
+
+// LastComment 获取最后一条回复
+func (t *Topic) LastComment(db *pg.DB) (*Comment, error) {
+	c := Comment{}
+	err := db.Model(&c).Where("topic_id = ?", t.ID).Order("id desc").Relation("User").First()
+	return &c, err
 }

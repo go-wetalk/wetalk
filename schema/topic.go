@@ -1,6 +1,21 @@
 package schema
 
-import validation "github.com/go-ozzo/ozzo-validation/v4"
+import (
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+)
+
+type Topic struct {
+	TopicListItem
+	Content string
+}
+
+type TopicListItem struct {
+	ID          uint
+	Title       string
+	Created     string
+	User        *User
+	LastComment *Comment
+}
 
 type TopicListInput struct {
 	Page uint

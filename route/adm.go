@@ -25,8 +25,8 @@ func SetupAdminServerV1(v1 muxie.SubMux) {
 		v1.Handle(
 			"/users",
 			muxie.Methods().
-				Handle(http.MethodPost, checkForUser.ForFunc(app.User{}.Create)).
-				Handle(http.MethodGet, checkForUserRO.ForFunc(app.User{}.List)))
+				Handle(http.MethodPost, checkForUser.ForFunc(admin.User{}.Create)).
+				Handle(http.MethodGet, checkForUserRO.ForFunc(admin.User{}.List)))
 
 		v1.Handle("/tokens", muxie.Methods().
 			HandleFunc(http.MethodPost, admin.Admin{}.Login))

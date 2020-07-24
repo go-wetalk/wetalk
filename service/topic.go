@@ -5,15 +5,49 @@ import (
 	"appsrv/schema"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/xeonx/timeago"
 )
 
 type Topic struct{}
 
 // ListWithRankByScore 综合评分进行排序的话题列表
-func (Topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) ([]model.Topic, error) {
+func (Topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) ([]schema.TopicListItem, error) {
 	ts := []model.Topic{}
-	err := db.Model(&ts).Order("id DESC").Limit(input.Size).Select()
-	return ts, err
+	err := db.Model(&ts).Order("id DESC").Limit(input.Size).Column("id", "title", "user_id").Relation("User").Select()
+
+	out := []schema.TopicListItem{}
+	for _, t := range ts {
+		item := schema.TopicListItem{}
+		item.ID = t.ID
+		item.Title = t.Title
+		item.Created = timeago.Chinese.Format(t.Created)
+
+		if t.User != nil {
+			item.User = &schema.User{
+				ID:   t.UserID,
+				Name: t.User.Name,
+				Logo: t.User.Logo,
+			}
+		}
+
+		if lastComment, err := t.LastComment(db); err == nil && lastComment != nil {
+			item.LastComment = &schema.Comment{
+				ID:      lastComment.ID,
+				TopicID: lastComment.TopicID,
+				Content: lastComment.Content,
+				Created: timeago.Chinese.Format(lastComment.Created),
+				User: &schema.User{
+					ID:   lastComment.UserID,
+					Name: lastComment.User.Name,
+					Logo: lastComment.User.Logo,
+				},
+			}
+		}
+
+		out = append(out, item)
+	}
+
+	return out, err
 }
 
 // Create 创建话题
