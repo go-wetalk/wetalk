@@ -15,7 +15,8 @@ func init() {
 
 		db.Insert(
 			&rule{
-				Path:       "/users**",
+				Path:       "/users/*",
+				Method:     "{POST,PUT,DELETE}",
 				Authorized: []string{"*"},
 			},
 			&rule{

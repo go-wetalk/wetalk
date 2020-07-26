@@ -35,7 +35,7 @@ func init() {
 			// 游客级规则拥有最低优先级
 			&rule{
 				Host:        "*",
-				Path:        "*",
+				Path:        "/*", // 接口前部必定由版本号起头，所以需要斜杠来分割节点，否则匹配的规则会被组合成类似 /v[0-9]* 的形式导致匹配失败
 				Method:      "*",
 				AllowAnyone: true,
 			},
@@ -77,9 +77,9 @@ type role struct {
 
 type rule struct {
 	ID          uint
-	Host        string `pg:",unique:action,default:*"`
-	Path        string `pg:",unique:action,default:*"`
-	Method      string `pg:",unique:action,default:*"`
+	Host        string `pg:",unique:action,default:'*'"`
+	Path        string `pg:",unique:action,default:'*'"`
+	Method      string `pg:",unique:action,default:'*'"`
 	AllowAnyone bool
 	Authorized  []string `pg:",array"`
 	Forbidden   []string `pg:",array"`

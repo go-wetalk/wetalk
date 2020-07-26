@@ -39,7 +39,7 @@ func RoleGuard(db *pg.DB) muxie.Wrapper {
 			}
 
 			state, _ := rbac.IsRequestGranted(r, assigned)
-			if state.IsGranted() || strings.Contains(strings.Join(assigned, ","), "root") {
+			if state.IsGranted() || strings.Contains(strings.Join(assigned, ","), "v0") {
 				next.ServeHTTP(w, r)
 			} else {
 				w.WriteHeader(403)
@@ -53,20 +53,25 @@ func RoleGuard(db *pg.DB) muxie.Wrapper {
 func RoleRulesLoader(db *pg.DB) func() (rules grbac.Rules, err error) {
 	return func() (rules grbac.Rules, err error) {
 		rs := []model.Rule{}
-		err = db.Model(&rs).Relation("AuthorizedRoles.key").Relation("ForbiddenRoles.key").Order("rule.priority ASC").Select()
+		err = db.Model(&rs).Order("rule.id ASC").Select()
 		if err != nil {
 			return nil, err
 		}
 
 		for _, r := range rs {
-			rule := grbac.Rule{}
-			rule.ID = int(r.ID)
-			rule.Host = r.Host
-			rule.Path = r.Path
-			rule.Method = r.Method
-			rule.AllowAnyone = r.AllowAnyone
-			rule.AuthorizedRoles = r.Authorized
-			rule.ForbiddenRoles = r.Forbidden
+			rule := grbac.Rule{
+				ID: int(r.ID),
+				Resource: &grbac.Resource{
+					Host:   r.Host,
+					Path:   "/v[0-9]" + r.Path, // 需要处理前面的版本号
+					Method: r.Method,
+				},
+				Permission: &grbac.Permission{
+					AuthorizedRoles: r.Authorized,
+					ForbiddenRoles:  r.Forbidden,
+					AllowAnyone:     r.AllowAnyone,
+				},
+			}
 			rules = append(rules, &rule)
 		}
 
