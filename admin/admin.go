@@ -48,7 +48,7 @@ func (Admin) Login(w http.ResponseWriter, r *http.Request) {
 
 	AdminLog{}.LogEvent(r, &a, "login", "成功")
 
-	token, err := auth.Token("admin", a.ID, []string{})
+	token, err := auth.Token(a.ID, a.RoleKeys)
 	if err != nil {
 		bog.Error("Admin.Login", zap.Error(err))
 		w.WriteHeader(http.StatusBadGateway)

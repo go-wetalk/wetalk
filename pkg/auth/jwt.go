@@ -26,10 +26,9 @@ type RoleClaims struct {
 	Roles  []string `json:"ros"`
 }
 
-func Token(scope string, uid uint, roles []string) (string, error) {
+func Token(uid uint, roles []string) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS384, RoleClaims{
 		StandardClaims: jwt.StandardClaims{
-			Audience:  scope,
 			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: time.Now().Add(time.Minute * 30).Unix(),
 		},

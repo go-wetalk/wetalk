@@ -13,18 +13,16 @@ const (
 
 type User struct {
 	ID       uint
-	Name     string `pg:",notnull"`
-	Phone    string
-	OpenID   string `pg:",unique"`
+	Name     string `pg:",notnull,unique"`
+	Phone    string `pg:",unique"`
+	Email    string `pg:",unique"`
+	Password string `json:"-"`
 	Gender   int    `pg:",default:1"`
 	Coin     int    `pg:",default:0"`
-	Remark   int8   `pg:",default:0"` // 账号来源标记
 	Street   string
 	City     string
 	Province string
-	Region   string
-	Email    string `pg:",unique"`
-	Password string
+	Country  string
 	Sign     string
 	RoleKeys []string `pg:",array"`
 

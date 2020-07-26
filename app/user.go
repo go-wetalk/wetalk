@@ -61,7 +61,7 @@ func (User) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.Token("app", u.ID, []string{})
+	token, err := auth.Token(u.ID, u.RoleKeys)
 	if err != nil {
 		w.WriteHeader(500)
 		muxie.Dispatch(w, muxie.JSON, errors.New(500, "网络链接波动请重试"))
@@ -110,7 +110,7 @@ func (User) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.Token("app", u.ID, []string{})
+	token, err := auth.Token(u.ID, u.RoleKeys)
 	if err != nil {
 		w.WriteHeader(500)
 		muxie.Dispatch(w, muxie.JSON, errors.New(500, "网络链接波动请重试"))
