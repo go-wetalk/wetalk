@@ -36,7 +36,7 @@ func init() {
 			&rule{
 				Host:        "*",
 				Path:        "/*", // 接口前部必定由版本号起头，所以需要斜杠来分割节点，否则匹配的规则会被组合成类似 /v[0-9]* 的形式导致匹配失败
-				Method:      "*",
+				Method:      "{HEAD,GET}",
 				AllowAnyone: true,
 			},
 		)
