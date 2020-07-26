@@ -15,6 +15,16 @@ func init() {
 
 		db.Insert(
 			&rule{
+				Path:        "/users",
+				Method:      "{POST}",
+				AllowAnyone: true, // 用户注册允许所有人请求
+			},
+			&rule{
+				Path:        "/tokens",
+				Method:      "{POST}",
+				AllowAnyone: true, // 用户登录允许所有人请求
+			},
+			&rule{
 				Path:       "/users/*",
 				Method:     "{POST,PUT,DELETE}",
 				Authorized: []string{"*"},
