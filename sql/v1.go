@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"appsrv/pkg/db"
 	"time"
 
 	"github.com/go-pg/pg/v9"
@@ -13,37 +14,32 @@ func init() {
 		createTable(
 			&admin{},
 			&adminLog{},
-			&adminRole{},
 			&role{},
+			&rule{},
 		)
 
-		i, _ := db.Model(&admin{}).Count()
-		if i == 0 {
-			l.Info("init table admin", zap.String("username", "admin"), zap.String("password", "admina"))
-			hash, _ := bcrypt.GenerateFromPassword([]byte("admina"), bcrypt.DefaultCost)
-			db.Insert(&admin{
-				Name:     "admin",
-				Password: string(hash),
-			})
-		}
+		db.Insert(
+			&role{Key: "v0", Name: "V0·超管"},
+			&role{Key: "v1", Name: "V1·用户"},
+		)
 
-		i, _ = db.Model(&role{}).Count()
-		if i == 0 {
-			l.Info("init table role", zap.String("key", "root"))
-			db.Insert(&role{
-				Key:  "root",
-				Name: "系统管理员",
-			})
-		}
+		l.Info("init table admin", zap.String("username", "admin"), zap.String("password", "admina"))
+		hash, _ := bcrypt.GenerateFromPassword([]byte("admina"), bcrypt.DefaultCost)
+		db.Insert(&admin{
+			Name:     "admin",
+			Password: string(hash),
+			RoleKeys: []string{"v0"},
+		})
 
-		i, _ = db.Model(&adminRole{}).Count()
-		if i == 0 {
-			l.Info("init role binding", zap.String("admin", "id:1"), zap.String("role", "key:root"))
-			db.Insert(&adminRole{
-				AdminID: 1,
-				RoleID:  1,
-			})
-		}
+		db.Insert(
+			// 游客级规则拥有最低优先级
+			&rule{
+				Host:        "*",
+				Path:        "*",
+				Method:      "*",
+				AllowAnyone: true,
+			},
+		)
 
 		return nil
 	})
@@ -51,11 +47,11 @@ func init() {
 
 type admin struct {
 	ID       uint
-	Name     string
-	Password string    `json:"-"`
-	Created  time.Time `pg:",default:now()"`
-	Updated  time.Time `pg:",default:now()"`
-	Deleted  *time.Time
+	Name     string   `pg:",unique"`
+	Password string   `json:"-"`
+	RoleKeys []string `pg:",array"`
+
+	db.TimeUpdate
 }
 
 type adminLog struct {
@@ -71,14 +67,22 @@ type adminLog struct {
 }
 
 type role struct {
-	ID     uint
-	Key    string `pg:",unique"`
-	Name   string
-	Intro  string
-	Admins []admin `pg:"many2many:admin_roles,joinFK:role_id" json:"-"`
+	ID    uint
+	Key   string `pg:",unique"`
+	Name  string
+	Intro string
+
+	db.TimeUpdate
 }
 
-type adminRole struct {
-	AdminID uint
-	RoleID  uint
+type rule struct {
+	ID          uint
+	Host        string `pg:",unique:action,default:*"`
+	Path        string `pg:",unique:action,default:*"`
+	Method      string `pg:",unique:action,default:*"`
+	AllowAnyone bool
+	Authorized  []string `pg:",array"`
+	Forbidden   []string `pg:",array"`
+
+	db.TimeUpdate
 }

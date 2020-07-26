@@ -14,6 +14,24 @@ func init() {
 			&tag{},
 			&comment{},
 		)
+
+		db.Insert(
+			&rule{
+				Path:       "/topics",
+				Method:     "{POST}",
+				Authorized: []string{"*"},
+			},
+			&rule{
+				Path:       "/topics/*",
+				Method:     "{PUT,DELETE}",
+				Authorized: []string{"*"},
+			},
+			&rule{
+				Path:       "/comments",
+				Method:     "{POST}",
+				Authorized: []string{"*"},
+			},
+		)
 		return nil
 	})
 }
@@ -37,11 +55,10 @@ type tag struct {
 }
 
 type comment struct {
-	ID        uint
-	TopicID   uint
-	UserID    uint
-	CommentID uint `pg:",default:0"`
-	Content   string
+	ID      uint
+	TopicID uint
+	UserID  uint
+	Content string
 
 	db.TimeUpdate
 }

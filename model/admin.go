@@ -3,7 +3,6 @@ package model
 import (
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -11,11 +10,10 @@ import (
 type Admin struct {
 	ID       uint
 	Name     string
-	Password string `json:"-"`
-	Created  time.Time
-	Updated  time.Time
-	Deleted  *time.Time `pg:",soft_delete"`
-	Roles    []Role     `pg:"many2many:admin_roles,joinFK:admin_id"`
+	Password string   `json:"-"`
+	RoleKeys []string `pg:",array"`
+
+	db.TimeUpdate
 }
 
 func (a *Admin) RoleList() (roles []Role) {

@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"appsrv/pkg/auth"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/config"
+	"appsrv/pkg/db"
 	"appsrv/route"
 	"net/http"
 
@@ -34,6 +36,8 @@ func createServeAppCommand() *cobra.Command {
 					}
 				})
 			})
+
+			m.Use(auth.RoleGuard(db.DB))
 
 			route.SetupAppServerV1(m.Of("/v1"))
 

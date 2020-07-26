@@ -8,24 +8,23 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-ozzo/ozzo-validation/v4 v4.2.1
 	github.com/go-pg/pg/v9 v9.1.6
-	github.com/go-pg/urlstruct v0.5.0 // indirect
+	github.com/go-pg/urlstruct v0.5.1 // indirect
 	github.com/go-redis/cache/v7 v7.0.2
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/jinzhu/now v1.1.1
 	github.com/json-iterator/go v1.1.10 // indirect
-	github.com/kataras/muxie v1.1.0
+	github.com/kataras/muxie v1.1.1
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/koding/multiconfig v0.0.0-20171124222453-69c27309b2d7
 	github.com/medivhzhan/weapp/v2 v2.2.1
 	github.com/minio/minio-go/v6 v6.0.57
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/storyicon/grbac v0.0.0-20200224041032-a0461737df7e
 	github.com/vmihailenco/msgpack/v4 v4.3.12
 	github.com/xeonx/timeago v1.0.0-rc4
 	go.uber.org/zap v1.15.0

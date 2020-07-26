@@ -3,8 +3,8 @@ package auth
 import (
 	"appsrv/pkg/config"
 	"appsrv/pkg/db"
+	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -12,32 +12,41 @@ import (
 	"github.com/kataras/muxie"
 )
 
-func Token(scope string, uid uint) (string, error) {
-	t := jwt.NewWithClaims(jwt.SigningMethodHS384, jwt.StandardClaims{
-		Audience:  scope,
-		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-		IssuedAt:  time.Now().Unix(),
-		Issuer:    fmt.Sprintf("%d", uid),
+// ContextKey 上下文键名
+type ContextKey string
+
+// Validated 用于从上下文提取JWT解析的数据
+const Validated ContextKey = "validated"
+
+// RoleClaims 添加了UserID和角色列表的JWT Claims.
+type RoleClaims struct {
+	jwt.StandardClaims
+
+	UserID uint     `json:"uid"`
+	Roles  []string `json:"ros"`
+}
+
+func Token(scope string, uid uint, roles []string) (string, error) {
+	t := jwt.NewWithClaims(jwt.SigningMethodHS384, RoleClaims{
+		StandardClaims: jwt.StandardClaims{
+			Audience:  scope,
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 30).Unix(),
+		},
+		UserID: uid,
+		Roles:  roles,
 	})
 
 	return t.SignedString([]byte(config.Server.Auth.Secret))
 }
 
-func Parse(token string) (*jwt.StandardClaims, error) {
-	t, err := jwt.ParseWithClaims(token, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
+func Parse(token string) (*RoleClaims, error) {
+	t, err := jwt.ParseWithClaims(token, &RoleClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte(config.Server.Auth.Secret), nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	if t.Valid {
-		if c, ok := t.Claims.(*jwt.StandardClaims); ok {
-			return c, nil
-		}
-
-		return nil, errors.New("claims losed")
+	if err == nil && t.Valid {
+		return t.Claims.(*RoleClaims), nil
 	}
 
 	return nil, err
@@ -55,42 +64,12 @@ func Guard(scope string, optional bool) muxie.Wrapper {
 
 				w.WriteHeader(http.StatusUnauthorized)
 			} else {
-				t, err := jwt.Parse(token[7:], func(t *jwt.Token) (interface{}, error) {
+				t, err := jwt.ParseWithClaims(token[7:], &RoleClaims{}, func(t *jwt.Token) (interface{}, error) {
 					return []byte(config.Server.Auth.Secret), nil
 				})
 
-				if err != nil {
-					if ve, ok := err.(*jwt.ValidationError); ok {
-						if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-							if optional {
-								next.ServeHTTP(w, r)
-							} else {
-								w.WriteHeader(http.StatusUnauthorized)
-							}
-						} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-							if optional {
-								next.ServeHTTP(w, r)
-							} else {
-								w.WriteHeader(http.StatusUnauthorized)
-							}
-						} else {
-							if optional {
-								next.ServeHTTP(w, r)
-							} else {
-								w.WriteHeader(http.StatusUnauthorized)
-							}
-						}
-					} else {
-						if optional {
-							next.ServeHTTP(w, r)
-						} else {
-							w.WriteHeader(http.StatusUnauthorized)
-						}
-					}
-					return
-				}
-
-				if t.Valid {
+				if err == nil && t.Valid {
+					r = r.WithContext(context.WithValue(r.Context(), Validated, t.Claims.(*RoleClaims)))
 					next.ServeHTTP(w, r)
 				} else {
 					if optional {
@@ -115,5 +94,5 @@ func GetUser(r *http.Request, ptr interface{}) error {
 		return err
 	}
 
-	return db.DB.Model(ptr).Where("id = ?", t.Issuer).Select()
+	return db.DB.Model(ptr).Where("id = ?", t.UserID).Select()
 }

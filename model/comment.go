@@ -3,15 +3,13 @@ package model
 import "appsrv/pkg/db"
 
 type Comment struct {
-	ID        uint
-	TopicID   uint
-	UserID    uint
-	CommentID uint `pg:",default:0"`
-	Content   string
+	ID      uint
+	TopicID uint
+	UserID  uint
+	Content string
 
 	db.TimeUpdate
 
-	User    *User
-	Topic   *Topic
-	Comment *Comment
+	User  *User
+	Topic *Topic
 }

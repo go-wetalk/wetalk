@@ -14,7 +14,7 @@ type TopicListItem struct {
 	Title       string
 	Created     string
 	User        *User
-	LastComment *Comment
+	LastComment *CommentBadge
 }
 
 type TopicListInput struct {

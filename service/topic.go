@@ -13,7 +13,7 @@ type Topic struct{}
 // ListWithRankByScore 综合评分进行排序的话题列表
 func (Topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) ([]schema.TopicListItem, error) {
 	ts := []model.Topic{}
-	err := db.Model(&ts).Order("id DESC").Limit(input.Size).Column("id", "title", "user_id").Relation("User").Select()
+	err := db.Model(&ts).Order("topic.id DESC").Limit(input.Size).Column("topic.id", "topic.title", "topic.user_id", "topic.created").Relation("User").Select()
 
 	out := []schema.TopicListItem{}
 	for _, t := range ts {
@@ -31,10 +31,9 @@ func (Topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) ([]sche
 		}
 
 		if lastComment, err := t.LastComment(db); err == nil && lastComment != nil {
-			item.LastComment = &schema.Comment{
+			item.LastComment = &schema.CommentBadge{
 				ID:      lastComment.ID,
 				TopicID: lastComment.TopicID,
-				Content: lastComment.Content,
 				Created: timeago.Chinese.Format(lastComment.Created),
 				User: &schema.User{
 					ID:   lastComment.UserID,

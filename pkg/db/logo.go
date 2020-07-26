@@ -3,6 +3,7 @@ package db
 import (
 	"appsrv/pkg/oss"
 	"context"
+	"strings"
 
 	"github.com/go-pg/pg/v9"
 )
@@ -30,7 +31,11 @@ func (l *LogoField) AfterScan(c context.Context) error {
 
 func (l LogoField) LogoLink() (s string) {
 	if l.LogoPath != "" {
-		s = oss.Server + "/" + l.LogoPath
+		if strings.HasPrefix(l.LogoPath, "https://") || strings.HasPrefix(l.LogoPath, "http://") {
+			s = l.LogoPath
+		} else {
+			s = oss.Server + "/" + l.LogoPath
+		}
 	}
 	return
 }

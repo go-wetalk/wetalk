@@ -26,6 +26,7 @@ type User struct {
 	Email    string `pg:",unique"`
 	Password string
 	Sign     string
+	RoleKeys []string `pg:",array"`
 
 	db.LogoField
 	db.TimeUpdate

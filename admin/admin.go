@@ -48,7 +48,7 @@ func (Admin) Login(w http.ResponseWriter, r *http.Request) {
 
 	AdminLog{}.LogEvent(r, &a, "login", "成功")
 
-	token, err := auth.Token("admin", a.ID)
+	token, err := auth.Token("admin", a.ID, []string{})
 	if err != nil {
 		bog.Error("Admin.Login", zap.Error(err))
 		w.WriteHeader(http.StatusBadGateway)
@@ -72,8 +72,6 @@ func (Admin) Profile(w http.ResponseWriter, r *http.Request) {
 		muxie.Dispatch(w, muxie.JSON, errors.New(401, err.Error()))
 		return
 	}
-
-	a.Roles = a.RoleList()
 
 	err = muxie.Dispatch(w, muxie.JSON, &a)
 	if err != nil {
@@ -107,15 +105,6 @@ func (Admin) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, role := range a.Roles {
-		_, err = db.DB.ExecOne("insert into admin_roles(admin_id, role_id) values(?, ?)", a.ID, role.ID)
-		if err != nil {
-			bog.Error("Admin.Create", zap.Error(err))
-			w.WriteHeader(500)
-			return
-		}
-	}
-
 	muxie.Dispatch(w, muxie.JSON, &a)
 }
 
@@ -126,10 +115,6 @@ func (Admin) List(w http.ResponseWriter, r *http.Request) {
 		bog.Error("Admin.List", zap.Error(err))
 		w.WriteHeader(500)
 		return
-	}
-
-	for i := range as {
-		as[i].Roles = as[i].RoleList()
 	}
 
 	muxie.Dispatch(w, muxie.JSON, &as)

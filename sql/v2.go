@@ -14,15 +14,18 @@ func init() {
 		)
 
 		db.Insert(
-			&role{
-				Key:   "user:ro",
-				Name:  "用户检索",
-				Intro: "允许检索用户资料",
+			&rule{
+				Path:       "/users**",
+				Authorized: []string{"*"},
 			},
-			&role{
-				Key:   "user",
-				Name:  "用户管理",
-				Intro: "允许对用户信息进行编辑操作",
+			&rule{
+				Path:       "/tokens",
+				Method:     "{PUT,DELETE}",
+				Authorized: []string{"*"},
+			},
+			&rule{
+				Path:       "/status",
+				Authorized: []string{"*"},
 			},
 		)
 
@@ -45,6 +48,7 @@ type user struct {
 	Email    string `pg:",unique"`
 	Password string
 	Sign     string
+	RoleKeys []string `pg:",array"`
 
 	db.LogoField
 	db.TimeUpdate
