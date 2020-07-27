@@ -3,6 +3,7 @@ module appsrv
 go 1.14
 
 require (
+	github.com/88250/lute v1.5.4
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect

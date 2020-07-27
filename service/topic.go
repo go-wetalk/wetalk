@@ -4,6 +4,7 @@ import (
 	"appsrv/model"
 	"appsrv/schema"
 
+	"github.com/88250/lute"
 	"github.com/go-pg/pg/v9"
 	"github.com/xeonx/timeago"
 )
@@ -51,9 +52,10 @@ func (Topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) ([]sche
 
 // Create 创建话题
 func (Topic) Create(db *pg.DB, u model.User, input schema.TopicCreateInput) (*model.Topic, error) {
+	lu := lute.New()
 	t := model.Topic{}
 	t.Title = input.Title
-	t.Content = input.Content
+	t.Content = lu.FormatStr("", input.Content)
 	t.UserID = u.ID
 	err := db.Insert(&t)
 	return &t, err
