@@ -40,7 +40,7 @@ type topic struct {
 	UserID  uint
 	Title   string
 	Content string
-	Tags    []string
+	Tags    []string `pg:",array"`
 
 	db.TimeUpdate
 }

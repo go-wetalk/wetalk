@@ -23,6 +23,9 @@ func (Topic) List(w http.ResponseWriter, r *http.Request) {
 	if p := r.URL.Query().Get("p"); p != "" {
 		input.Page = cast.ToUint(p)
 	}
+	if t := r.URL.Query().Get("t"); t != "" {
+		input.Tag = strings.TrimSpace(t)
+	}
 
 	ts, _ := service.Topic{}.ListWithRankByScore(db.DB, input)
 	muxie.Dispatch(w, muxie.JSON, ts)

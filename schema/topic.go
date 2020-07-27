@@ -20,6 +20,7 @@ type TopicListItem struct {
 type TopicListInput struct {
 	Page uint
 	Size int
+	Tag  string
 }
 
 type TopicCreateInput struct {

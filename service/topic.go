@@ -15,7 +15,11 @@ type Topic struct{}
 // ListWithRankByScore 综合评分进行排序的话题列表
 func (Topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) ([]schema.TopicListItem, error) {
 	ts := []model.Topic{}
-	err := db.Model(&ts).Order("topic.id DESC").Limit(input.Size).Column("topic.id", "topic.title", "topic.user_id", "topic.created").Relation("User").Select()
+	q := db.Model(&ts).Order("topic.id DESC").Limit(input.Size).Column("topic.id", "topic.title", "topic.user_id", "topic.created").Relation("User")
+	if input.Tag != "" {
+		q.Where("? = ANY(topic.tags)", input.Tag)
+	}
+	err := q.Select()
 
 	out := []schema.TopicListItem{}
 	for _, t := range ts {
