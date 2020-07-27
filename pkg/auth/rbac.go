@@ -41,9 +41,12 @@ func RoleGuard(db *pg.DB) muxie.Wrapper {
 			state, _ := rbac.IsRequestGranted(r, assigned)
 			if state.IsGranted() || strings.Contains(strings.Join(assigned, ","), "v0") {
 				next.ServeHTTP(w, r)
-			} else {
+			} else if len(assigned) > 0 { // 有角色说明令牌有效，那么自然是无权访问
 				w.WriteHeader(403)
 				muxie.Dispatch(w, muxie.JSON, errors.New(403, "您无权访问该对象"))
+			} else {
+				w.WriteHeader(401)
+				muxie.Dispatch(w, muxie.JSON, errors.New(401, "请登录"))
 			}
 		})
 	}
