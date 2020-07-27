@@ -32,7 +32,7 @@ func (Topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) ([]sche
 			item.User = &schema.User{
 				ID:   t.UserID,
 				Name: t.User.Name,
-				Logo: t.User.Logo,
+				Logo: t.User.LogoLink(),
 			}
 		}
 
