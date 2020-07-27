@@ -7,6 +7,7 @@ import (
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
+	"strings"
 
 	"github.com/kataras/muxie"
 	"github.com/spf13/cast"
@@ -42,6 +43,8 @@ func (Topic) Create(w http.ResponseWriter, r *http.Request) {
 		muxie.Dispatch(w, muxie.JSON, err)
 	}
 
+	input.Title = strings.TrimSpace(input.Title)
+	input.Content = strings.TrimSpace(input.Content)
 	if err = input.Validate(); err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 	}

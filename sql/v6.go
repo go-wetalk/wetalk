@@ -10,6 +10,20 @@ func init() {
 		createTable(
 			&siteConfig{},
 		)
+
+		db.Insert(
+			&siteConfig{
+				Key:     "domain",
+				Value:   "devto.icu",
+				Comment: "域名，用于生成对外链接，如：devto.icu",
+			},
+			&siteConfig{
+				Key:     "name",
+				Value:   "DevToICU",
+				Comment: "社区名称",
+			},
+		)
+
 		return nil
 	})
 }

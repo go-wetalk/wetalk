@@ -2,11 +2,20 @@ package service
 
 import (
 	"appsrv/model"
+	"appsrv/pkg/bog"
 	"appsrv/pkg/errors"
+	"appsrv/pkg/oss"
 	"appsrv/schema"
+	"bytes"
+	"image/png"
 	"strings"
+	"time"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/minio/minio-go/v6"
+	uuid "github.com/satori/go.uuid"
+	"github.com/tsdtsdtsd/identicon"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,6 +36,8 @@ func (User) List(db *pg.DB) ([]model.User, error) {
 
 // CreateWithInput 账号注册
 func (User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.User, error) {
+	input.Username = strings.TrimSpace(input.Username)
+
 	var u model.User
 	n, err := db.Model(&u).Where("name = ?", strings.ToLower(input.Username)).Count()
 	if err != nil {
@@ -39,15 +50,38 @@ func (User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.Use
 
 	p, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.New(500, "网络通信错误请重试")
+		return nil, errors.Err500
 	}
 
 	u.Name = input.Username
 	u.Password = string(p)
 	u.RoleKeys = []string{"v1"}
+	u.LogoPath = time.Now().Format("20060102") + "/" + uuid.NewV4().String() + ".png"
+
+	icon, err := identicon.New(u.Name, &identicon.Options{
+		BackgroundColor: identicon.RGB(240, 240, 240),
+		ImageSize:       240,
+	})
+	if err != nil {
+		return nil, errors.Err500
+	}
+	b := bytes.NewBuffer(nil)
+	err = png.Encode(b, icon)
+	if err != nil {
+		return nil, errors.Err500
+	}
+
+	_, err = oss.Min.PutObject(oss.Bucket, u.LogoPath, b, int64(b.Len()), minio.PutObjectOptions{
+		ContentType: "image/png",
+	})
+	if err != nil {
+		bog.Error("minio.PutObject", zap.Error(err))
+		return nil, errors.Err500
+	}
+
 	err = db.Insert(&u)
 	if err != nil {
-		return nil, errors.New(500, "网络通信错误请重试")
+		return nil, errors.Err500
 	}
 
 	return &u, nil

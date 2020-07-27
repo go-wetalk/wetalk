@@ -3,6 +3,7 @@ package service
 import (
 	"appsrv/model"
 	"appsrv/schema"
+	"strings"
 
 	"github.com/88250/lute"
 	"github.com/go-pg/pg/v9"
@@ -57,6 +58,13 @@ func (Topic) Create(db *pg.DB, u model.User, input schema.TopicCreateInput) (*mo
 	t.Title = input.Title
 	t.Content = lu.FormatStr("", input.Content)
 	t.UserID = u.ID
+
+	for _, tag := range input.Tags {
+		if tag = strings.TrimSpace(tag); tag != "" {
+			t.Tags = append(t.Tags, tag)
+		}
+	}
+
 	err := db.Insert(&t)
 	return &t, err
 }

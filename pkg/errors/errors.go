@@ -14,8 +14,15 @@ var (
 		Code:    404,
 		Message: "未查询到相关数据",
 	}
+
+	// Err500 returns 500 error.
+	Err500 = JSONError{
+		Code:    500,
+		Message: "💥服务器爆炸啦",
+	}
 )
 
+// New error with given http status code and message.
 func New(code int, msg string) error {
 	return JSONError{
 		Code:    code,

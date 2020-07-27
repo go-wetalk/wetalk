@@ -11,7 +11,7 @@ type Topic struct {
 	UserID  uint
 	Title   string
 	Content string
-	Tags    []Tag `pg:",many2many:topic_tag"`
+	Tags    []string
 
 	db.TimeUpdate
 
