@@ -44,17 +44,20 @@ func (Topic) Create(w http.ResponseWriter, r *http.Request) {
 	err = muxie.Bind(r, muxie.JSON, &input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
+		return
 	}
 
 	input.Title = strings.TrimSpace(input.Title)
 	input.Content = strings.TrimSpace(input.Content)
 	if err = input.Validate(); err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
+		return
 	}
 
 	t, err := service.Topic{}.Create(db.DB, u, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
+		return
 	}
 
 	muxie.Dispatch(w, muxie.JSON, t)
