@@ -4,6 +4,7 @@ import (
 	"appsrv/model"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/db"
+	"appsrv/pkg/errors"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
@@ -37,26 +38,30 @@ func (Topic) Create(w http.ResponseWriter, r *http.Request) {
 	err := auth.GetUser(r, &u)
 	if err != nil {
 		w.WriteHeader(401)
+		muxie.Dispatch(w, muxie.JSON, errors.New(401, "请登录"))
 		return
 	}
 
 	var input schema.TopicCreateInput
 	err = muxie.Bind(r, muxie.JSON, &input)
 	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, err)
+		w.WriteHeader(429)
+		muxie.Dispatch(w, muxie.JSON, errors.ErrBodyBind)
 		return
 	}
 
 	input.Title = strings.TrimSpace(input.Title)
 	input.Content = strings.TrimSpace(input.Content)
 	if err = input.Validate(); err != nil {
+		w.WriteHeader(400)
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
 	}
 
 	t, err := service.Topic{}.Create(db.DB, u, input)
 	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, err)
+		w.WriteHeader(500)
+		muxie.Dispatch(w, muxie.JSON, errors.Err500)
 		return
 	}
 
