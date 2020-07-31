@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cast"
 )
 
-var Comment *comment
+var Comment = new(comment)
 
 type comment struct{}
 
