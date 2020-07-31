@@ -9,7 +9,7 @@ import (
 	"github.com/xeonx/timeago"
 )
 
-var Comment *comment
+var Comment = new(comment)
 
 type comment struct{}
 
