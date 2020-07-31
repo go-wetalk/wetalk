@@ -31,3 +31,8 @@ func (v TopicCommentCreation) Validate() error {
 		validation.Field(&v.Content, validation.RuneLength(4, math.MaxUint32).Error("评论内容至少4个字")),
 	)
 }
+
+type CommentFilter struct {
+	TopicID uint
+	Page    int
+}

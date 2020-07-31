@@ -26,9 +26,19 @@ func init() {
 				Authorized: []string{"*"},
 			},
 			&rule{
+				Path:        "/topics/*",
+				Method:      "{GET}",
+				AllowAnyone: true,
+			},
+			&rule{
 				Path:       "/comments",
 				Method:     "{POST}",
 				Authorized: []string{"*"},
+			},
+			&rule{
+				Path:        "/comments",
+				Method:      "{GET}",
+				AllowAnyone: true,
 			},
 		)
 		return nil

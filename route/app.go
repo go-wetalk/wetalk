@@ -22,8 +22,12 @@ func SetupAppServerV1(v1 muxie.SubMux) {
 		HandleFunc(http.MethodGet, app.Topic{}.List).
 		HandleFunc(http.MethodPost, app.Topic{}.Create))
 
+	v1.Handle("/topics/:topicID", muxie.Methods().
+		HandleFunc(http.MethodGet, app.Topic{}.Find))
+
 	v1.Handle("/comments", muxie.Methods().
-		HandleFunc(http.MethodPost, app.Comment{}.CreateTopicComment))
+		HandleFunc(http.MethodGet, app.Comment.ListByFilter).
+		HandleFunc(http.MethodPost, app.Comment.CreateTopicComment))
 
 	v1.Handle("/tasks", muxie.Methods().
 		HandleFunc(http.MethodGet, app.Task{}.AppList))

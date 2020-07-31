@@ -7,6 +7,7 @@ import (
 type Topic struct {
 	TopicListItem
 	Content string
+	Tags    []string
 }
 
 type TopicListItem struct {

@@ -28,7 +28,7 @@ func (Topic) List(w http.ResponseWriter, r *http.Request) {
 		input.Tag = strings.TrimSpace(t)
 	}
 
-	ts, _ := service.Topic{}.ListWithRankByScore(db.DB, input)
+	ts, _ := service.Topic.ListWithRankByScore(db.DB, input)
 	muxie.Dispatch(w, muxie.JSON, ts)
 }
 
@@ -58,11 +58,23 @@ func (Topic) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := service.Topic{}.Create(db.DB, u, input)
+	t, err := service.Topic.Create(db.DB, u, input)
 	if err != nil {
 		w.WriteHeader(500)
 		muxie.Dispatch(w, muxie.JSON, errors.Err500)
 		return
+	}
+
+	muxie.Dispatch(w, muxie.JSON, t)
+}
+
+// Find 查看话题详情
+func (Topic) Find(w http.ResponseWriter, r *http.Request) {
+	topicID := cast.ToUint(muxie.GetParam(w, "topicID"))
+	t, err := service.Topic.FindByID(db.DB, topicID)
+	if err != nil {
+		w.WriteHeader(500)
+		muxie.Dispatch(w, muxie.JSON, errors.Err500)
 	}
 
 	muxie.Dispatch(w, muxie.JSON, t)

@@ -6,11 +6,14 @@ import (
 	"appsrv/schema"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/xeonx/timeago"
 )
 
-type Comment struct{}
+var Comment *comment
 
-func (Comment) CreateTopicComment(db *pg.DB, u model.User, input schema.TopicCommentCreation) (*model.Comment, error) {
+type comment struct{}
+
+func (comment) CreateTopicComment(db *pg.DB, u model.User, input schema.TopicCommentCreation) (*model.Comment, error) {
 	t := model.Topic{}
 	err := db.Model(&t).Where("id = ?", input.TopicID).First()
 	if err != nil {
@@ -27,4 +30,31 @@ func (Comment) CreateTopicComment(db *pg.DB, u model.User, input schema.TopicCom
 	}
 
 	return &com, nil
+}
+
+func (comment) FindByFilterInput(db *pg.DB, input schema.CommentFilter) ([]schema.Comment, error) {
+	cs := []model.Comment{}
+	err := db.Model(&cs).Relation("User").Where("comment.topic_id = ?", input.TopicID).Order("comment.updated DESC").Offset((input.Page - 1) * 20).Limit(20).Select()
+	if err != nil {
+		return nil, errors.Err500
+	}
+
+	out := []schema.Comment{}
+	for _, com := range cs {
+		out = append(out, schema.Comment{
+			CommentBadge: schema.CommentBadge{
+				ID:      com.ID,
+				TopicID: com.TopicID,
+				Created: timeago.Chinese.Format(com.Created),
+				User: &schema.User{
+					ID:   com.UserID,
+					Name: com.User.Name,
+					Logo: com.User.LogoLink(),
+				},
+			},
+			Content: com.Content,
+		})
+	}
+
+	return out, nil
 }

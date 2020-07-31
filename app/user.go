@@ -23,17 +23,19 @@ func (User) AppStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var out = struct {
-		ID     uint
-		Name   string
-		Logo   string
-		Gender int
-		Coin   int
+		ID      uint
+		Name    string
+		Logo    string
+		Gender  int
+		Coin    int
+		Created string
 	}{
-		ID:     u.ID,
-		Name:   u.Name,
-		Logo:   u.Logo,
-		Gender: u.Gender,
-		Coin:   u.Coin,
+		ID:      u.ID,
+		Name:    u.Name,
+		Logo:    u.Logo,
+		Gender:  u.Gender,
+		Coin:    u.Coin,
+		Created: u.Created.Format("2006-01-02 15:04:05"),
 	}
 
 	muxie.Dispatch(w, muxie.JSON, &out)

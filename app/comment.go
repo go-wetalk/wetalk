@@ -10,12 +10,15 @@ import (
 	"net/http"
 
 	"github.com/kataras/muxie"
+	"github.com/spf13/cast"
 )
 
-type Comment struct{}
+var Comment *comment
+
+type comment struct{}
 
 // CreateTopicComment 发表帖子评论
-func (Comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
+func (comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -38,7 +41,7 @@ func (Comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := service.Comment{}.CreateTopicComment(db.DB, u, input)
+	c, err := service.Comment.CreateTopicComment(db.DB, u, input)
 	if err != nil {
 		w.WriteHeader(err.(errors.JSONError).Code)
 		muxie.Dispatch(w, muxie.JSON, err)
@@ -46,4 +49,22 @@ func (Comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	muxie.Dispatch(w, muxie.JSON, c)
+}
+
+func (comment) ListByFilter(w http.ResponseWriter, r *http.Request) {
+	input := schema.CommentFilter{}
+	input.TopicID = cast.ToUint(r.URL.Query().Get("tid"))
+	input.Page = cast.ToInt(r.URL.Query().Get("p"))
+	if input.Page < 1 {
+		input.Page = 1
+	}
+
+	cs, err := service.Comment.FindByFilterInput(db.DB, input)
+	if err != nil {
+		w.WriteHeader(500)
+		muxie.Dispatch(w, muxie.JSON, err)
+		return
+	}
+
+	muxie.Dispatch(w, muxie.JSON, cs)
 }
