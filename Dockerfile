@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -mod vendor -gcflags "-l -w" -o appsrv
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -gcflags "-l -w" -o appsrv
 
 ################################
 # Build runtime container.     #
@@ -24,7 +24,6 @@ RUN apk update && apk --no-cache add tzdata ca-certificates wget \
 
 USER 1000
 WORKDIR /app
-COPY --from=rushb /app/resources/fonts/Songti.ttc /app/Songti.ttc
 COPY --from=rushb /app/appsrv /app/appsrv
 
 EXPOSE 8080
