@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -mod vendor -gcflags "-l -w" -o appsrv
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -gcflags "-l -w" -o appsrv
 
 ################################
 # Build runtime container.     #
