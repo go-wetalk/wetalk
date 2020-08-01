@@ -32,16 +32,26 @@ func (comment) CreateTopicComment(db *pg.DB, u model.User, input schema.TopicCom
 	return &com, nil
 }
 
-func (comment) FindByFilterInput(db *pg.DB, input schema.CommentFilter) ([]schema.Comment, error) {
+func (comment) FindByFilterInput(db *pg.DB, input schema.CommentFilter) (*schema.Pagination, error) {
+	out := schema.Pagination{
+		PerPage: input.Size,
+	}
+
 	cs := []model.Comment{}
-	err := db.Model(&cs).Relation("User").Where("comment.topic_id = ?", input.TopicID).Order("comment.updated DESC").Offset((input.Page - 1) * 20).Limit(20).Select()
+	count, err := db.Model(&cs).Relation("User").
+		Where("comment.topic_id = ?", input.TopicID).
+		Order("comment.id DESC").
+		Offset((input.Page - 1) * input.Size).Limit(input.Size).
+		SelectAndCount()
 	if err != nil {
 		return nil, errors.Err500
 	}
 
-	out := []schema.Comment{}
+	out.RowCount = count
+
+	data := []schema.Comment{}
 	for _, com := range cs {
-		out = append(out, schema.Comment{
+		data = append(data, schema.Comment{
 			CommentBadge: schema.CommentBadge{
 				ID:      com.ID,
 				TopicID: com.TopicID,
@@ -56,5 +66,7 @@ func (comment) FindByFilterInput(db *pg.DB, input schema.CommentFilter) ([]schem
 		})
 	}
 
-	return out, nil
+	out.Data = data
+
+	return &out, nil
 }

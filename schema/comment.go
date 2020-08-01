@@ -35,4 +35,5 @@ func (v TopicCommentCreation) Validate() error {
 type CommentFilter struct {
 	TopicID uint
 	Page    int
+	Size    int
 }

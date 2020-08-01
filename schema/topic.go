@@ -7,19 +7,19 @@ import (
 type Topic struct {
 	TopicListItem
 	Content string
-	Tags    []string
 }
 
 type TopicListItem struct {
 	ID          uint
 	Title       string
+	Tags        []string
 	Created     string
 	User        *User
 	LastComment *CommentBadge
 }
 
 type TopicListInput struct {
-	Page uint
+	Page int
 	Size int
 	Tag  string
 }

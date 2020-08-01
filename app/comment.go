@@ -58,6 +58,10 @@ func (comment) ListByFilter(w http.ResponseWriter, r *http.Request) {
 	if input.Page < 1 {
 		input.Page = 1
 	}
+	input.Size = cast.ToInt(r.URL.Query().Get("s"))
+	if input.Size < 1 {
+		input.Size = 20
+	}
 
 	cs, err := service.Comment.FindByFilterInput(db.DB, input)
 	if err != nil {

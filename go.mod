@@ -33,6 +33,7 @@ require (
 	github.com/tsdtsdtsd/identicon v0.3.2
 	github.com/vmihailenco/msgpack/v4 v4.3.12
 	github.com/xeonx/timeago v1.0.0-rc4
+	github.com/yuin/goldmark v1.2.1
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/image v0.0.0-20200618115811-c13761719519

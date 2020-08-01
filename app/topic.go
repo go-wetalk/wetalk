@@ -20,9 +20,13 @@ type Topic struct{}
 // List 取出话题列表
 func (Topic) List(w http.ResponseWriter, r *http.Request) {
 	input := schema.TopicListInput{}
-	input.Size = 20
-	if p := r.URL.Query().Get("p"); p != "" {
-		input.Page = cast.ToUint(p)
+	input.Size = cast.ToInt(r.URL.Query().Get("s"))
+	if input.Size < 1 {
+		input.Size = 20
+	}
+	input.Page = cast.ToInt(r.URL.Query().Get("p"))
+	if input.Page < 1 {
+		input.Page = 1
 	}
 	if t := r.URL.Query().Get("t"); t != "" {
 		input.Tag = strings.TrimSpace(t)
