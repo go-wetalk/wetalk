@@ -1,27 +1,22 @@
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: app
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: appsrv
-  namespace: app
+  name: wetalk
+  namespace: wetalk
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: appsrv
+      k8s-app: wetalk
   template:
     metadata:
       labels:
-        k8s-app: appsrv
+        k8s-app: wetalk
     spec:
       containers:
-      - image: app/appsrv
-        name: appsrv
+      - image: wetalk/wetalk
+        name: wetalk
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -112,32 +107,32 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: appsrv
-  namespace: app
+  name: wetalk
+  namespace: wetalk
 spec:
   ports:
   - port: 8080
   selector:
-    k8s-app: appsrv
+    k8s-app: wetalk
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: appsrv
-  namespace: app
+  name: wetalk
+  namespace: wetalk
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "acme-prod"
 spec:
   tls:
   - hosts:
-    - appsrv.example.com
-    secretName: appsrv
+    - devto.icu
+    secretName: wetalk
   rules:
-  - host: appsrv.example.com
+  - host: devto.icu
     http:
       paths:
       - path: /
         backend:
-          serviceName: appsrv
+          serviceName: wetalk
           servicePort: 8080

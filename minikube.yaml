@@ -3,13 +3,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: appsrv
+  name: wetalk
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: pgcm
-  namespace: appsrv
+  namespace: wetalk
   labels:
     app: postgres
 data:
@@ -21,7 +21,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pg
-  namespace: appsrv
+  namespace: wetalk
 spec:
   strategy:
     type: Recreate
@@ -47,7 +47,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: pgsvc
-  namespace: appsrv
+  namespace: wetalk
 spec:
   type: NodePort
   ports:
@@ -60,7 +60,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  namespace: appsrv
+  namespace: wetalk
   labels:
     k8s-app: redis
 spec:
@@ -83,7 +83,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis
-  namespace: appsrv
+  namespace: wetalk
 spec:
   type: NodePort
   ports:
@@ -96,7 +96,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: oss
-  namespace: appsrv
+  namespace: wetalk
 spec:
   selector:
     matchLabels:
@@ -125,7 +125,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: oss
-  namespace: appsrv
+  namespace: wetalk
 spec:
   type: NodePort
   ports:
