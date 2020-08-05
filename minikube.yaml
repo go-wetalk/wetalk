@@ -1,11 +1,6 @@
 # minikube 内构建开发环境
 ---
 apiVersion: v1
-kind: Namespace
-metadata:
-  name: wetalk
----
-apiVersion: v1
 kind: ConfigMap
 metadata:
   name: pgcm
@@ -16,6 +11,7 @@ data:
   POSTGRES_DB: appsrv
   POSTGRES_USER: appsrv
   POSTGRES_PASSWORD: appsrvappsrv
+  PGDATA: "/var/lib/postgresql/data/pgdata"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -37,11 +33,21 @@ spec:
       - image: postgres:12.1
         name: postgres
         envFrom:
-          - configMapRef:
-              name: pgcm
+        - configMapRef:
+            name: pgcm
         ports:
-          - containerPort: 5432
-            name: postgres
+        - containerPort: 5432
+          name: postgres
+        volumeMounts:
+          - mountPath: "/var/lib/postgresql/data/pgdata"
+            name: "pgsql-data"
+      securityContext:
+        fsGroup: 70
+      volumes:
+      - name: "pgsql-data"
+        hostPath:
+          path: /data/wetalk-pgsql
+          type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service
@@ -120,6 +126,16 @@ spec:
           value: "testtest"
         - name: MINIO_SECRET_KEY
           value: "testtesttesttest"
+        volumeMounts:
+        - mountPath: "/data"
+          name: "oss-data"
+      securityContext:
+        fsGroup: 1000
+      volumes:
+      - name: "oss-data"
+        hostPath:
+          path: /data/wetalk-minio
+          type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service
