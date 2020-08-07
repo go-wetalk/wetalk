@@ -103,6 +103,16 @@ spec:
             secretKeyRef:
               name: appsecrets
               key: qapp_secret
+        - name: SERVERCONFIG_HCAPTCHA_ENABLED
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: hcaptcha_enabled
+        - name: SERVERCONFIG_HCAPTCHA_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: appsecrets
+              key: hcaptcha_secret
 ---
 apiVersion: v1
 kind: Service

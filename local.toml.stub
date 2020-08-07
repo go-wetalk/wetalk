@@ -29,3 +29,7 @@ Secret  = ""
 [Qapp]
 AppID   = ""
 Secret  = ""
+
+[hCaptcha]
+Enabled = true
+Secret = ""

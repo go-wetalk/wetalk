@@ -3,12 +3,14 @@ package app
 import (
 	"appsrv/model"
 	"appsrv/pkg/auth"
+	"appsrv/pkg/config"
 	"appsrv/pkg/db"
 	"appsrv/pkg/errors"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
 
+	"github.com/kataras/hcaptcha"
 	"github.com/kataras/muxie"
 )
 
@@ -54,6 +56,15 @@ func (User) SignUp(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
+	}
+
+	if config.Server.HCaptcha.Enabled {
+		hcc := hcaptcha.New(config.Server.HCaptcha.Secret)
+		if resp := hcc.VerifyToken(input.Captcha); !resp.Success {
+			w.WriteHeader(400)
+			muxie.Dispatch(w, muxie.JSON, errors.New(400, resp.ChallengeTS))
+			return
+		}
 	}
 
 	u, err := service.User{}.CreateWithInput(db.DB, input)

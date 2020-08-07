@@ -18,6 +18,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/jinzhu/now v1.1.1
 	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/kataras/hcaptcha v0.0.0-20200711031247-2927d4faf32f
 	github.com/kataras/muxie v1.1.1
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/koding/multiconfig v0.0.0-20171124222453-69c27309b2d7
