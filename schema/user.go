@@ -1,6 +1,8 @@
 package schema
 
-import validation "github.com/go-ozzo/ozzo-validation/v4"
+import (
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+)
 
 type User struct {
 	ID   uint
@@ -60,4 +62,25 @@ type UserSignOutput struct {
 		Created   string
 		Coin      int
 	}
+}
+
+type UserStatus struct {
+	ID           uint
+	Name         string
+	Logo         string
+	Gender       int
+	Coin         int
+	Created      string
+	RoleList     []string
+	UnreadNotify int
+}
+
+type UserDetail struct {
+	User
+
+	Created      string
+	TopicCount   int
+	Topics       []TopicListItem
+	CommentCount int
+	Comments     []CommentBadge
 }

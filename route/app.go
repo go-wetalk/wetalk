@@ -33,4 +33,9 @@ func SetupAppServerV1(v1 muxie.SubMux) {
 		HandleFunc(http.MethodGet, app.Task{}.AppList))
 	v1.Handle("/tasks/:taskID/bonus", muxie.Methods().
 		HandleFunc(http.MethodPost, app.Task{}.AppTaskLogCreate))
+
+	v1.Handle("/users/:name", muxie.Methods().HandleFunc(http.MethodGet, app.User{}.ViewUserDetail))
+
+	v1.Handle("/notifications", muxie.Methods().HandleFunc(http.MethodGet, app.Notification.List))
+	v1.Handle("/notifications/:notificationID", muxie.Methods().HandleFunc(http.MethodDelete, app.Notification.MarkRead))
 }

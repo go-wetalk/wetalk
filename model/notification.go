@@ -7,6 +7,7 @@ type Notification struct {
 	ID      uint
 	RecvID  uint
 	Content string
+	HasRead bool `pg:",default:false"`
 
 	db.TimeUpdate
 }

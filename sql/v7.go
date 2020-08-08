@@ -9,6 +9,10 @@ import (
 
 func init() {
 	Setup(7, func(db *pg.DB, l *zap.Logger) error {
+		createTable(
+			&notification{},
+			&message{},
+		)
 		return nil
 	})
 }
@@ -29,6 +33,7 @@ type notification struct {
 	ID      uint
 	RecvID  uint
 	Content string
+	HasRead bool `pg:",default:false"`
 
 	db.TimeUpdate
 }

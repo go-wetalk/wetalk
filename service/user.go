@@ -105,3 +105,17 @@ func (User) FindWithCredential(db *pg.DB, input schema.UserSignUpInput) (*model.
 
 	return &u, nil
 }
+
+// FindByName 根据给定名称查找对应用户
+func (User) FindByName(db *pg.DB, name string) (*model.User, error) {
+	var u model.User
+	err := db.Model(&u).Where("name = ? OR name = ?", name, strings.ToLower(name)).First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, errors.ErrNotFound
+		}
+		return nil, errors.Err500
+	}
+
+	return &u, nil
+}

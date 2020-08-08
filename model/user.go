@@ -2,6 +2,10 @@ package model
 
 import (
 	"appsrv/pkg/db"
+	"context"
+	"fmt"
+
+	"github.com/go-pg/pg/v9"
 )
 
 const (
@@ -28,4 +32,19 @@ type User struct {
 
 	db.LogoField
 	db.TimeUpdate
+}
+
+var _ pg.AfterInsertHook = (*User)(nil)
+
+func (u User) AfterInsert(c context.Context) error {
+	n := Notification{
+		RecvID:  u.ID,
+		Content: "欢迎你，优秀的第 " + fmt.Sprintf("%d", u.ID) + " 号会员。祝你玩的开心，能有更多收获与积累。",
+	}
+	return db.DB.Insert(&n)
+}
+
+func (u User) UnreadNotify() (count int) {
+	count, _ = db.DB.Model((*Notification)(nil)).Where("recv_id = ? and has_read = ?", u.ID, false).Count()
+	return
 }

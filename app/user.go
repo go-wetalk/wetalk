@@ -9,9 +9,11 @@ import (
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
+	"strings"
 
 	"github.com/kataras/hcaptcha"
 	"github.com/kataras/muxie"
+	"github.com/xeonx/timeago"
 )
 
 type User struct{}
@@ -24,20 +26,15 @@ func (User) AppStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var out = struct {
-		ID      uint
-		Name    string
-		Logo    string
-		Gender  int
-		Coin    int
-		Created string
-	}{
-		ID:      u.ID,
-		Name:    u.Name,
-		Logo:    u.Logo,
-		Gender:  u.Gender,
-		Coin:    u.Coin,
-		Created: u.Created.Format("2006-01-02 15:04:05"),
+	var out = schema.UserStatus{
+		ID:           u.ID,
+		Name:         u.Name,
+		Logo:         u.Logo,
+		Gender:       u.Gender,
+		Coin:         u.Coin,
+		Created:      u.Created.Format("2006-01-02 15:04:05"),
+		RoleList:     u.RoleKeys,
+		UnreadNotify: u.UnreadNotify(),
 	}
 
 	muxie.Dispatch(w, muxie.JSON, &out)
@@ -83,14 +80,7 @@ func (User) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	var out struct {
 		Token string
-		User  struct {
-			ID      uint
-			Name    string
-			Logo    string
-			Gender  int
-			Created string
-			Coin    int
-		}
+		User  schema.UserStatus
 	}
 	out.Token = token
 	out.User.ID = u.ID
@@ -98,6 +88,8 @@ func (User) SignUp(w http.ResponseWriter, r *http.Request) {
 	out.User.Logo = u.Logo
 	out.User.Gender = u.Gender
 	out.User.Created = u.Created.Format("2006-01-02 15:04:05")
+	out.User.RoleList = u.RoleKeys
+	out.User.UnreadNotify = u.UnreadNotify()
 	muxie.Dispatch(w, muxie.JSON, out)
 }
 
@@ -132,14 +124,7 @@ func (User) Login(w http.ResponseWriter, r *http.Request) {
 
 	var out struct {
 		Token string
-		User  struct {
-			ID      uint
-			Name    string
-			Logo    string
-			Gender  int
-			Created string
-			Coin    int
-		}
+		User  schema.UserStatus
 	}
 	out.Token = token
 	out.User.ID = u.ID
@@ -147,5 +132,24 @@ func (User) Login(w http.ResponseWriter, r *http.Request) {
 	out.User.Logo = u.Logo
 	out.User.Gender = u.Gender
 	out.User.Created = u.Created.Format("2006-01-02 15:04:05")
+	out.User.RoleList = u.RoleKeys
+	out.User.UnreadNotify = u.UnreadNotify()
+	muxie.Dispatch(w, muxie.JSON, out)
+}
+
+func (User) ViewUserDetail(w http.ResponseWriter, r *http.Request) {
+	name := muxie.GetParam(w, "name")
+	u, err := service.User{}.FindByName(db.DB, strings.TrimSpace(name))
+	if err != nil {
+		muxie.Dispatch(w, muxie.JSON, err)
+		return
+	}
+
+	out := schema.UserDetail{}
+	out.ID = u.ID
+	out.Name = u.Name
+	out.Logo = u.LogoLink()
+	out.Created = timeago.Chinese.Format(u.Created)
+
 	muxie.Dispatch(w, muxie.JSON, out)
 }
