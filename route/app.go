@@ -38,4 +38,10 @@ func SetupAppServerV1(v1 muxie.SubMux) {
 
 	v1.Handle("/notifications", muxie.Methods().HandleFunc(http.MethodGet, app.Notification.List))
 	v1.Handle("/notifications/:notificationID", muxie.Methods().HandleFunc(http.MethodDelete, app.Notification.MarkRead))
+
+	v1.Handle("/profile", muxie.Methods().HandleFunc(http.MethodGet, app.User{}.ViewProfile))
+	v1.Handle("/profile/logo", muxie.Methods().HandleFunc(http.MethodPut, app.User{}.UpdateLogo))
+	v1.Handle("/profile/address", muxie.Methods().HandleFunc(http.MethodPut, app.User{}.UpdateAddress))
+	v1.Handle("/profile/social", muxie.Methods().HandleFunc(http.MethodPut, app.User{}.UpdateSocial))
+	v1.Handle("/profile/password", muxie.Methods().HandleFunc(http.MethodPut, app.User{}.UpdatePassword))
 }

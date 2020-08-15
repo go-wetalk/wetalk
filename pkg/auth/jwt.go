@@ -3,7 +3,7 @@ package auth
 import (
 	"appsrv/pkg/config"
 	"appsrv/pkg/db"
-	"appsrv/pkg/errors"
+	"appsrv/pkg/out"
 	"net/http"
 	"time"
 
@@ -40,7 +40,7 @@ func Token(uid uint, roles []string) (string, error) {
 func GetUser(r *http.Request, ptr interface{}) error {
 	rc := r.Context().Value(Validated)
 	if rc == nil {
-		return errors.New(401, "请登录")
+		return out.Err(401, "请登录")
 	}
 	return db.DB.Model(ptr).Where("id = ?", rc.(*RoleClaims).UserID).First()
 }

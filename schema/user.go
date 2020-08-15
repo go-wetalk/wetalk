@@ -84,3 +84,21 @@ type UserDetail struct {
 	CommentCount int
 	Comments     []CommentBadge
 }
+
+// UserAddress 用户地址
+type UserAddress struct {
+	Street   string
+	City     string
+	Province string
+	Country  string
+}
+
+// UserSocial 社交资料
+type UserSocial struct {
+	Sign string
+}
+
+type UserPassword struct {
+	Original string
+	Password string
+}

@@ -4,6 +4,7 @@ import (
 	"appsrv/model"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
+	"appsrv/pkg/out"
 	"net/http"
 	"time"
 
@@ -60,7 +61,7 @@ func (Announce) AppList(w http.ResponseWriter, r *http.Request) {
 	as := []model.Announce{}
 	_ = db.DB.Model(&as).Where("(show IS NULL OR show < ?) AND (hide IS NULL OR hide > ?)", t, t).OrderExpr("seq DESC, id ASC").Select()
 
-	var out = []struct {
+	var raw = []struct {
 		ID        uint
 		Name      string
 		Slot      uint8
@@ -70,7 +71,7 @@ func (Announce) AppList(w http.ResponseWriter, r *http.Request) {
 		Logo      string
 	}{}
 	for _, a := range as {
-		out = append(out, struct {
+		raw = append(raw, struct {
 			ID        uint
 			Name      string
 			Slot      uint8
@@ -88,5 +89,5 @@ func (Announce) AppList(w http.ResponseWriter, r *http.Request) {
 			Logo:      a.LogoLink(),
 		})
 	}
-	muxie.Dispatch(w, muxie.JSON, &out)
+	muxie.Dispatch(w, muxie.JSON, out.Data(raw))
 }

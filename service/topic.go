@@ -3,7 +3,7 @@ package service
 import (
 	"appsrv/model"
 	"appsrv/pkg/bog"
-	"appsrv/pkg/errors"
+	"appsrv/pkg/out"
 	"appsrv/schema"
 	"bytes"
 	"strings"
@@ -22,7 +22,7 @@ type topic struct{}
 
 // ListWithRankByScore 综合评分进行排序的主题列表
 func (v *topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) (*schema.Pagination, error) {
-	out := schema.Pagination{
+	pag := schema.Pagination{
 		PerPage: input.Size,
 	}
 
@@ -37,10 +37,10 @@ func (v *topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) (*sc
 	count, err := q.SelectAndCount()
 	if err != nil {
 		bog.Error("topic.ListWithRankByScore", zap.Error(err))
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 
-	out.RowCount = count
+	pag.RowCount = count
 
 	data := []schema.TopicListItem{}
 	for _, t := range ts {
@@ -74,9 +74,9 @@ func (v *topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) (*sc
 		data = append(data, item)
 	}
 
-	out.Data = data
+	pag.Data = data
 
-	return &out, err
+	return &pag, err
 }
 
 // Create 创建主题
@@ -102,7 +102,7 @@ func (v *topic) FindByID(db *pg.DB, id uint) (*schema.Topic, error) {
 	t := model.Topic{}
 	err := db.Model(&t).Relation("User").Where("topic.id = ?", id).First()
 	if err != nil {
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 
 	item := schema.TopicListItem{}
@@ -132,7 +132,7 @@ func (v *topic) FindByID(db *pg.DB, id uint) (*schema.Topic, error) {
 		}
 	}
 
-	out := schema.Topic{
+	to := schema.Topic{
 		TopicListItem: item,
 		Content:       t.Content,
 	}
@@ -143,10 +143,10 @@ func (v *topic) FindByID(db *pg.DB, id uint) (*schema.Topic, error) {
 	err = gm.Convert([]byte(t.Content), &b)
 	if err != nil {
 		bog.Error("goldmark.Convert", zap.Error(err))
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 
-	out.Content = b.String()
+	to.Content = b.String()
 
-	return &out, nil
+	return &to, nil
 }

@@ -3,8 +3,8 @@ package service
 import (
 	"appsrv/model"
 	"appsrv/pkg/bog"
-	"appsrv/pkg/errors"
 	"appsrv/pkg/oss"
+	"appsrv/pkg/out"
 	"appsrv/schema"
 	"bytes"
 	"image/png"
@@ -41,16 +41,16 @@ func (User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.Use
 	var u model.User
 	n, err := db.Model(&u).Where("name = ?", strings.ToLower(input.Username)).Count()
 	if err != nil {
-		return nil, errors.New(500, err.Error())
+		return nil, out.Err(500, err.Error())
 	}
 
 	if n > 0 {
-		return nil, errors.New(409, "该名称已被使用")
+		return nil, out.Err(409, "该名称已被使用")
 	}
 
 	p, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 
 	u.Name = input.Username
@@ -63,12 +63,12 @@ func (User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.Use
 		ImageSize:       240,
 	})
 	if err != nil {
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 	b := bytes.NewBuffer(nil)
 	err = png.Encode(b, icon)
 	if err != nil {
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 
 	_, err = oss.Min.PutObject(oss.Bucket, u.LogoPath, b, int64(b.Len()), minio.PutObjectOptions{
@@ -76,12 +76,12 @@ func (User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.Use
 	})
 	if err != nil {
 		bog.Error("minio.PutObject", zap.Error(err))
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 
 	err = db.Insert(&u)
 	if err != nil {
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 
 	return &u, nil
@@ -93,14 +93,14 @@ func (User) FindWithCredential(db *pg.DB, input schema.UserSignUpInput) (*model.
 	err := db.Model(&u).Where("name = ? OR name = ?", input.Username, strings.ToLower(input.Username)).First()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil, errors.New(400, "该用户不存在")
+			return nil, out.Err(400, "该用户不存在")
 		}
-		return nil, errors.New(500, "服务器已爆炸")
+		return nil, out.Err(500, "服务器已爆炸")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(input.Password))
 	if err != nil {
-		return nil, errors.New(400, "密码错误")
+		return nil, out.Err(400, "密码错误")
 	}
 
 	return &u, nil
@@ -112,9 +112,9 @@ func (User) FindByName(db *pg.DB, name string) (*model.User, error) {
 	err := db.Model(&u).Where("name = ? OR name = ?", name, strings.ToLower(name)).First()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil, errors.ErrNotFound
+			return nil, out.ErrNotFound
 		}
-		return nil, errors.Err500
+		return nil, out.Err500
 	}
 
 	return &u, nil

@@ -3,7 +3,7 @@ package auth
 import (
 	"appsrv/model"
 	"appsrv/pkg/config"
-	"appsrv/pkg/errors"
+	"appsrv/pkg/out"
 	"context"
 	"net/http"
 	"strings"
@@ -43,10 +43,10 @@ func RoleGuard(db *pg.DB) muxie.Wrapper {
 				next.ServeHTTP(w, r)
 			} else if len(assigned) > 0 { // 有角色说明令牌有效，那么自然是无权访问
 				w.WriteHeader(403)
-				muxie.Dispatch(w, muxie.JSON, errors.New(403, "您无权访问该对象"))
+				muxie.Dispatch(w, muxie.JSON, out.Err(403, "您无权访问该对象"))
 			} else {
 				w.WriteHeader(401)
-				muxie.Dispatch(w, muxie.JSON, errors.New(401, "请登录"))
+				muxie.Dispatch(w, muxie.JSON, out.Err(401, "请登录"))
 			}
 		})
 	}

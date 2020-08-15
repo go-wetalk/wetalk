@@ -2,7 +2,7 @@ package service
 
 import (
 	"appsrv/model"
-	"appsrv/pkg/errors"
+	"appsrv/pkg/out"
 	"appsrv/schema"
 
 	"github.com/go-pg/pg/v9"
@@ -22,7 +22,7 @@ func (notification) FindForUser(db *pg.DB, u *model.User, input schema.Paginate)
 		Offset(input.Offset()).Limit(input.Size).
 		SelectAndCount()
 	if err != nil {
-		return ret, errors.Err500
+		return ret, out.Err500
 	}
 
 	out := []schema.Notification{}

@@ -5,7 +5,7 @@ import (
 	"appsrv/pkg/auth"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
-	"appsrv/pkg/errors"
+	"appsrv/pkg/out"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
@@ -34,19 +34,17 @@ func (notification) List(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
-		w.WriteHeader(401)
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
 	}
 
 	ret, err := service.Notification.FindForUser(db.DB, &u, input)
 	if err != nil {
-		w.WriteHeader(500)
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
 	}
 
-	muxie.Dispatch(w, muxie.JSON, ret)
+	muxie.Dispatch(w, muxie.JSON, out.Data(ret))
 }
 
 func (notification) MarkRead(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +53,6 @@ func (notification) MarkRead(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
-		w.WriteHeader(401)
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
 	}
@@ -65,5 +62,5 @@ func (notification) MarkRead(w http.ResponseWriter, r *http.Request) {
 		bog.Error("notification.MarkRead", zap.Error(err))
 	}
 
-	muxie.Dispatch(w, muxie.JSON, errors.New(204, "操作成功"))
+	muxie.Dispatch(w, muxie.JSON, out.Err(204, "操作成功"))
 }

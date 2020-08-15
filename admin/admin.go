@@ -5,7 +5,7 @@ import (
 	"appsrv/pkg/auth"
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
-	"appsrv/pkg/errors"
+	"appsrv/pkg/out"
 	"net/http"
 
 	"github.com/kataras/muxie"
@@ -25,7 +25,7 @@ func (Admin) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		bog.Error("Admin.Login", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
-		muxie.Dispatch(w, muxie.JSON, errors.ErrBodyBind)
+		muxie.Dispatch(w, muxie.JSON, out.ErrBodyBind)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (Admin) Profile(w http.ResponseWriter, r *http.Request) {
 	a := model.Admin{}
 	err := auth.GetUser(r, &a)
 	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, errors.New(401, err.Error()))
+		muxie.Dispatch(w, muxie.JSON, out.Err(401, err.Error()))
 		return
 	}
 
@@ -155,7 +155,7 @@ func (Admin) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if in.NewPwd != in.Confirm {
-		muxie.Dispatch(w, muxie.JSON, errors.New(400, "新密码输入不一致"))
+		muxie.Dispatch(w, muxie.JSON, out.Err(400, "新密码输入不一致"))
 		return
 	}
 
@@ -169,7 +169,7 @@ func (Admin) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(in.OldPwd))
 	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, errors.New(400, "密码错误"))
+		muxie.Dispatch(w, muxie.JSON, out.Err(400, "密码错误"))
 		return
 	}
 
@@ -183,5 +183,5 @@ func (Admin) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	AdminLog{}.LogEvent(r, &a, "password", "修改密码")
 
-	muxie.Dispatch(w, muxie.JSON, errors.New(200, "修改成功"))
+	muxie.Dispatch(w, muxie.JSON, out.Data(nil))
 }

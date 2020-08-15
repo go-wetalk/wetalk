@@ -3,7 +3,7 @@ package admin
 import (
 	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
-	"appsrv/pkg/errors"
+	"appsrv/pkg/out"
 	"appsrv/service"
 	"net/http"
 
@@ -17,7 +17,7 @@ func (User) Create(w http.ResponseWriter, r *http.Request) {
 	input := service.UserCreateInput{}
 	err := muxie.Bind(r, muxie.JSON, &input)
 	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, errors.ErrBodyBind)
+		muxie.Dispatch(w, muxie.JSON, out.ErrBodyBind)
 		return
 	}
 
