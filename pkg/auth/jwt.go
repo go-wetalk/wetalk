@@ -34,7 +34,7 @@ func Token(uid uint, roles []string) (string, error) {
 		Roles:  roles,
 	})
 
-	return t.SignedString([]byte(config.Server.Auth.Secret))
+	return t.SignedString([]byte(config.ProvideSingleton().Auth.Secret))
 }
 
 func GetUser(r *http.Request, ptr interface{}) error {
@@ -42,5 +42,7 @@ func GetUser(r *http.Request, ptr interface{}) error {
 	if rc == nil {
 		return out.Err(401, "请登录")
 	}
-	return db.DB.Model(ptr).Where("id = ?", rc.(*RoleClaims).UserID).First()
+
+	dbc := db.ProvideSingleton()
+	return dbc.Model(ptr).Where("id = ?", rc.(*RoleClaims).UserID).First()
 }

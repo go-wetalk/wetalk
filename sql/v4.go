@@ -11,6 +11,7 @@ import (
 func init() {
 	Setup(4, func(db *pg.DB, l *zap.Logger) error {
 		createTable(
+			db,
 			&task{},
 			&taskLog{},
 			&coinLog{},

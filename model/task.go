@@ -1,13 +1,13 @@
 package model
 
 import (
-	"appsrv/pkg/bog"
 	"appsrv/pkg/db"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/go-pg/pg/v9"
 	"github.com/jinzhu/now"
-	"go.uber.org/zap"
 )
 
 const (
@@ -44,44 +44,43 @@ type Task struct {
 }
 
 // AvailableTo 判断该任务对于给定用户是否可完成
-func (t *Task) AvailableTo(u *User) bool {
+func (t *Task) AvailableTo(db *pg.DB, u *User) error {
 	n := time.Now()
 	if t.Begin != nil && t.Begin.After(n) {
-		return false
+		return errors.New("任务未开始")
 	}
 	if t.End != nil && t.End.Before(n) {
-		return false
+		return errors.New("任务已结束")
 	}
 
 	l := TaskLog{}
-	err := db.DB.Model(&l).Where("task_id = ? AND user_id = ?", t.ID, u.ID).Order("id DESC").First()
+	err := db.Model(&l).Where("task_id = ? AND user_id = ?", t.ID, u.ID).Order("id DESC").First()
 	if err != nil {
-		bog.Error("Task.AvailableTo", zap.Error(err), zap.Uint("UserID", u.ID), zap.Uint("TaskID", t.ID))
-		return true
+		return nil
 	}
 
 	// 每日刷新的任务，按天计算，不按小时计算
 	if t.Daily && l.Created.Before(now.BeginningOfDay()) {
-		return true
+		return nil
 	}
 
 	if t.Cooling > 0 && l.Created.Add(time.Duration(t.Cooling)*time.Second).Before(n) {
-		return true
+		return nil
 	}
 
-	count, _ := db.DB.Model((*TaskLog)(nil)).Where("task_id = ? AND user_id = ?", t.ID, u.ID).Count()
+	count, _ := db.Model((*TaskLog)(nil)).Where("task_id = ? AND user_id = ?", t.ID, u.ID).Count()
 	if t.Times > 0 && int(t.Times) > count {
-		return true
+		return nil
 	}
 
-	return false
+	return errors.New("条件不满足")
 }
 
-func (t *Task) StatusText(u *User) string {
+func (t *Task) StatusText(db *pg.DB, u *User) string {
 	switch t.Bonus {
 	case BonusCoin:
 		if t.Fulfilled(u) {
-			if t.Got(u) {
+			if t.Got(db, u) {
 				return "已领取"
 			} else {
 				return fmt.Sprintf("积分 +%d", t.BonusNum)
@@ -106,15 +105,15 @@ func (t *Task) Fulfilled(u *User) bool {
 	return t.Step(u) == t.FactorNum
 }
 
-func (t *Task) Got(u *User) bool {
-	count, _ := db.DB.Model((*TaskLog)(nil)).
+func (t *Task) Got(db *pg.DB, u *User) bool {
+	count, _ := db.Model((*TaskLog)(nil)).
 		Where("task_id = ? AND user_id = ?", t.ID, u.ID).
 		Where("created BETWEEN ? AND ?", now.BeginningOfDay(), now.EndOfDay()).
 		Count()
 	return count > 0
 }
 
-func (t *Task) Confirm(u *User) (*TaskLog, error) {
+func (t *Task) Confirm(db *pg.DB, u *User) (*TaskLog, error) {
 	l := TaskLog{
 		TaskID:    t.ID,
 		UserID:    u.ID,
@@ -123,7 +122,7 @@ func (t *Task) Confirm(u *User) (*TaskLog, error) {
 		Factor:    t.Factor,
 		FactorNum: t.FactorNum,
 	}
-	err := db.DB.Insert(&l)
+	err := db.Insert(&l)
 	if err != nil {
 		return nil, err
 	}

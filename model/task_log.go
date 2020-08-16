@@ -2,7 +2,6 @@ package model
 
 import (
 	"appsrv/pkg/db"
-	"context"
 	"errors"
 
 	"github.com/go-pg/pg/v9"
@@ -21,17 +20,17 @@ type TaskLog struct {
 	db.TimeUpdate
 }
 
-var _ pg.AfterInsertHook = (*TaskLog)(nil)
+// var _ pg.AfterInsertHook = (*TaskLog)(nil)
 
-func (l *TaskLog) AfterInsert(ctx context.Context) error {
-	return l.DispatchBonus()
-}
+// func (l *TaskLog) AfterInsert(ctx context.Context) error {
+// 	return l.DispatchBonus()
+// }
 
-func (l *TaskLog) DispatchBonus() error {
+func (l *TaskLog) DispatchBonus(db *pg.DB) error {
 	switch l.Bonus {
 	case BonusCoin:
 		var bal int
-		db.DB.Model(&User{ID: l.UserID}).WherePK().Column("coin").Select(pg.Scan(&bal))
+		db.Model(&User{ID: l.UserID}).WherePK().Column("coin").Select(pg.Scan(&bal))
 		cl := CoinLog{
 			UserID:   l.UserID,
 			Source:   "tasks",
@@ -39,7 +38,7 @@ func (l *TaskLog) DispatchBonus() error {
 			Value:    l.BonusNum,
 			Balance:  bal + l.BonusNum,
 		}
-		return db.DB.Insert(&cl)
+		return db.Insert(&cl)
 	}
 	return errors.New("undefined task bonus")
 }

@@ -1,12 +1,11 @@
 package sql
 
 import (
-	"appsrv/pkg/bog"
-	"appsrv/pkg/db"
 	"sort"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
+	"github.com/prometheus/common/log"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +15,7 @@ func Setup(v int, m func(db *pg.DB, l *zap.Logger) error) {
 	ms[v] = m
 }
 
-func Run() {
+func Run(db *pg.DB, log *zap.Logger) {
 	ints := make([]int, 0)
 	for i := range ms {
 		ints = append(ints, i)
@@ -26,48 +25,48 @@ func Run() {
 
 	for _, v := range ints {
 		m := ms[v]
-		if checkV(v) {
-			bog.Info("migating", zap.Int("v", v))
-			err := m(db.DB, bog.Log)
+		if checkV(db, v) {
+			log.Info("migating", zap.Int("v", v))
+			err := m(db, log)
 			if err != nil {
-				bog.Fatal("migrating fails", zap.Error(err))
+				log.Fatal("migrating fails", zap.Error(err))
 			}
 
-			updateV(v)
-			bog.Info("migrated", zap.Int("v", v))
+			updateV(db, v)
+			log.Info("migrated", zap.Int("v", v))
 		} else {
-			bog.Info("migration skipped", zap.Int("v", v))
+			log.Info("migration skipped", zap.Int("v", v))
 		}
 	}
 }
 
 func checkErr(err error) {
 	if err != nil {
-		bog.Error("migration error", zap.Error(err))
+		log.Error("migration error", zap.Error(err))
 	}
 }
 
-func createTable(tables ...interface{}) {
+func createTable(db *pg.DB, tables ...interface{}) {
 	for _, ptr := range tables {
-		err := db.DB.CreateTable(ptr, &orm.CreateTableOptions{
+		err := db.CreateTable(ptr, &orm.CreateTableOptions{
 			IfNotExists: true,
 		})
 		checkErr(err)
 	}
 }
 
-func checkV(v int) bool {
+func checkV(db *pg.DB, v int) bool {
 	if v == 0 {
 		return true
 	}
 
 	var max int
-	db.DB.Model((*version)(nil)).ColumnExpr("MAX(version.code)").Select(&max)
+	db.Model((*version)(nil)).ColumnExpr("MAX(version.code)").Select(&max)
 	return v > max
 }
 
-func updateV(v int) error {
-	return db.DB.Insert(&version{
+func updateV(db *pg.DB, v int) error {
+	return db.Insert(&version{
 		Code: v,
 	})
 }

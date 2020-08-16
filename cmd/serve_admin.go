@@ -1,14 +1,10 @@
 package cmd
 
 import (
-	"appsrv/pkg/bog"
-	"appsrv/pkg/config"
-	"appsrv/route"
 	"net/http"
 
 	"github.com/kataras/muxie"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 func createServeAdminCommand() *cobra.Command {
@@ -34,17 +30,17 @@ func createServeAdminCommand() *cobra.Command {
 				})
 			})
 
-			route.SetupAdminServerV1(m.Of("/v1"))
+			// route.SetupAdminServerV1(m.Of("/v1"))
 
-			if config.Server.Port == "" {
-				config.Server.Port = ":8080"
-			}
+			// if config.ProvideSingleton().Port == "" {
+			// 	config.ProvideSingleton().Port = ":8080"
+			// }
 
-			bog.Info("server started", zap.String("addr", config.Server.Port))
-			err := http.ListenAndServe(config.Server.Port, m)
-			if err != nil {
-				bog.Error("server error", zap.Error(err))
-			}
+			// bog.Info("server started", zap.String("addr", config.ProvideSingleton().Port))
+			// err := http.ListenAndServe(config.ProvideSingleton().Port, m)
+			// if err != nil {
+			// 	bog.Error("server error", zap.Error(err))
+			// }
 		},
 	}
 }

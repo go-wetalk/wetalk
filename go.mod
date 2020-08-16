@@ -13,6 +13,7 @@ require (
 	github.com/go-redis/cache/v7 v7.0.2
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+	github.com/google/wire v0.4.0
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect

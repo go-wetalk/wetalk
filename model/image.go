@@ -2,7 +2,6 @@ package model
 
 import (
 	"appsrv/pkg/db"
-	"appsrv/pkg/oss"
 	"context"
 
 	"github.com/go-pg/pg/v9"
@@ -34,5 +33,6 @@ func (i *Image) AfterScan(c context.Context) error {
 }
 
 func (i *Image) ImageLink() string {
-	return oss.Server + "/" + oss.Bucket + "/" + i.Path
+	// return oss.Server + "/" + oss.Bucket + "/" + i.Path
+	return ""
 }

@@ -2,9 +2,6 @@ package model
 
 import (
 	"appsrv/pkg/db"
-	"context"
-
-	"github.com/go-pg/pg/v9"
 )
 
 type CoinLog struct {
@@ -18,9 +15,9 @@ type CoinLog struct {
 	db.TimeUpdate
 }
 
-var _ pg.AfterInsertHook = (*CoinLog)(nil)
+// var _ pg.AfterInsertHook = (*CoinLog)(nil)
 
-func (cl *CoinLog) AfterInsert(ctx context.Context) error {
-	_, err := db.DB.Model(&User{ID: cl.UserID}).WherePK().Set("coin = ?", cl.Balance).Update()
-	return err
-}
+// func (cl *CoinLog) AfterInsert(ctx context.Context) error {
+// 	_, err := db.DB.Model(&User{ID: cl.UserID}).WherePK().Set("coin = ?", cl.Balance).Update()
+// 	return err
+// }

@@ -11,6 +11,7 @@ import (
 func init() {
 	Setup(3, func(db *pg.DB, l *zap.Logger) error {
 		createTable(
+			db,
 			&text{},
 			&announce{},
 		)

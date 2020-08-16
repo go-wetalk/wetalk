@@ -2,19 +2,25 @@ package redis
 
 import (
 	gocache "github.com/go-redis/cache/v7"
+	goredis "github.com/go-redis/redis/v7"
 	"github.com/vmihailenco/msgpack/v4"
 )
 
-var Cache *gocache.Codec
+var cc *gocache.Codec
 
-func InitCache() {
-	Cache = &gocache.Codec{
-		Redis: Redis,
-		Marshal: func(v interface{}) ([]byte, error) {
-			return msgpack.Marshal(v)
-		},
-		Unmarshal: func(b []byte, v interface{}) error {
-			return msgpack.Unmarshal(b, v)
-		},
+// ProvideCache provides cache wrapper for redis.
+func ProvideCache(rc *goredis.Client) *gocache.Codec {
+	if cc == nil {
+		cc = &gocache.Codec{
+			Redis: rc,
+			Marshal: func(v interface{}) ([]byte, error) {
+				return msgpack.Marshal(v)
+			},
+			Unmarshal: func(b []byte, v interface{}) error {
+				return msgpack.Unmarshal(b, v)
+			},
+		}
 	}
+
+	return cc
 }

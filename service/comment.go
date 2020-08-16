@@ -11,7 +11,13 @@ import (
 
 var Comment = new(comment)
 
-type comment struct{}
+type comment struct {
+	db *pg.DB
+}
+
+func NewCommentService() *comment {
+	return &comment{}
+}
 
 func (comment) CreateTopicComment(db *pg.DB, u model.User, input schema.TopicCommentCreation) (*model.Comment, error) {
 	t := model.Topic{}

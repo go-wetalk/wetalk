@@ -2,7 +2,6 @@ package service
 
 import (
 	"appsrv/model"
-	"appsrv/pkg/bog"
 	"appsrv/pkg/out"
 	"appsrv/schema"
 	"bytes"
@@ -18,7 +17,10 @@ import (
 
 var Topic *topic
 
-type topic struct{}
+type topic struct {
+	db  *pg.DB
+	log *zap.Logger
+}
 
 // ListWithRankByScore 综合评分进行排序的主题列表
 func (v *topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) (*schema.Pagination, error) {
@@ -36,7 +38,7 @@ func (v *topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) (*sc
 	}
 	count, err := q.SelectAndCount()
 	if err != nil {
-		bog.Error("topic.ListWithRankByScore", zap.Error(err))
+		v.log.Error("topic.ListWithRankByScore", zap.Error(err))
 		return nil, out.Err500
 	}
 
@@ -142,7 +144,7 @@ func (v *topic) FindByID(db *pg.DB, id uint) (*schema.Topic, error) {
 	var b bytes.Buffer
 	err = gm.Convert([]byte(t.Content), &b)
 	if err != nil {
-		bog.Error("goldmark.Convert", zap.Error(err))
+		v.log.Error("goldmark.Convert", zap.Error(err))
 		return nil, out.Err500
 	}
 

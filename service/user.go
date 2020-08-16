@@ -2,8 +2,7 @@ package service
 
 import (
 	"appsrv/model"
-	"appsrv/pkg/bog"
-	"appsrv/pkg/oss"
+	"appsrv/pkg/config"
 	"appsrv/pkg/out"
 	"appsrv/schema"
 	"bytes"
@@ -19,7 +18,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct{}
+type User struct {
+	db   *pg.DB
+	log  *zap.Logger
+	mc   *minio.Client
+	conf *config.ServerConfig
+}
+
+func NewUserService(db *pg.DB, log *zap.Logger, mc *minio.Client, conf *config.ServerConfig) *User {
+	return &User{
+		db:   db,
+		log:  log,
+		mc:   mc,
+		conf: conf,
+	}
+}
 
 type UserCreateInput model.User
 
@@ -35,7 +48,7 @@ func (User) List(db *pg.DB) ([]model.User, error) {
 }
 
 // CreateWithInput 账号注册
-func (User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.User, error) {
+func (v User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.User, error) {
 	input.Username = strings.TrimSpace(input.Username)
 
 	var u model.User
@@ -71,11 +84,11 @@ func (User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.Use
 		return nil, out.Err500
 	}
 
-	_, err = oss.Min.PutObject(oss.Bucket, u.LogoPath, b, int64(b.Len()), minio.PutObjectOptions{
+	_, err = v.mc.PutObject(v.conf.Oss.Bucket, u.LogoPath, b, int64(b.Len()), minio.PutObjectOptions{
 		ContentType: "image/png",
 	})
 	if err != nil {
-		bog.Error("minio.PutObject", zap.Error(err))
+		v.log.Error("minio.PutObject", zap.Error(err))
 		return nil, out.Err500
 	}
 

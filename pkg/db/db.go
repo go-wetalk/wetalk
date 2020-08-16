@@ -19,20 +19,28 @@ func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) error {
 	return nil
 }
 
-var DB *pg.DB
+var db *pg.DB
 
-func InitConn(c config.DBConfig, debug bool) error {
-	DB = pg.Connect(&pg.Options{
-		Addr:     c.Addr,
-		User:     c.User,
-		Password: c.Secret,
-		Database: c.Name,
-	})
+// ProvideSingleton provides singleton DB instance.
+func ProvideSingleton() *pg.DB {
+	if db == nil {
+		c := config.ProvideSingleton()
 
-	if debug {
-		DB.AddQueryHook(dbLogger{})
+		db = pg.Connect(&pg.Options{
+			Addr:     c.DB.Addr,
+			User:     c.DB.User,
+			Password: c.DB.Secret,
+			Database: c.DB.Name,
+		})
+
+		if c.Debug {
+			db.AddQueryHook(dbLogger{})
+		}
+
+		if _, err := db.Exec("select 1"); err != nil {
+			panic(err)
+		}
 	}
 
-	_, err := DB.Exec("select 1")
-	return err
+	return db
 }

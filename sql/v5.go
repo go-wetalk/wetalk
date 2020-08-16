@@ -10,6 +10,7 @@ import (
 func init() {
 	Setup(5, func(db *pg.DB, l *zap.Logger) error {
 		createTable(
+			db,
 			&topic{},
 			&comment{},
 		)

@@ -1,26 +1,48 @@
+//+build wireinject
+
 package app
 
 import (
 	"appsrv/model"
+	"appsrv/pkg"
 	"appsrv/pkg/auth"
-	"appsrv/pkg/bog"
-	"appsrv/pkg/db"
+	"appsrv/pkg/config"
 	"appsrv/pkg/out"
+	"appsrv/pkg/runtime"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
 
+	"github.com/go-pg/pg/v9"
+	"github.com/google/wire"
 	"github.com/kataras/muxie"
+	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 )
 
-// Notification 消息
-var Notification = &notification{}
+type Notification struct {
+	db   *pg.DB
+	log  *zap.Logger
+	mc   *minio.Client
+	conf *config.ServerConfig
+}
 
-type notification struct{}
+func (v *Notification) RegisterRoute(m muxie.SubMux) {
+	m.Handle("/notifications", muxie.Methods().HandleFunc(http.MethodGet, v.List))
+	m.Handle("/notifications/:notificationID", muxie.Methods().HandleFunc(http.MethodDelete, v.MarkRead))
+}
 
-func (notification) List(w http.ResponseWriter, r *http.Request) {
+func NewNotificationController() runtime.Controller {
+	wire.Build(
+		pkg.ApplicationSet,
+		wire.Struct(new(Notification), "*"),
+		wire.Bind(new(runtime.Controller), new(*Notification)),
+	)
+	return nil
+}
+
+func (v Notification) List(w http.ResponseWriter, r *http.Request) {
 	input := schema.Paginate{}
 	input.Size = cast.ToInt(r.URL.Query().Get("s"))
 	if input.Size < 1 {
@@ -38,7 +60,7 @@ func (notification) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret, err := service.Notification.FindForUser(db.DB, &u, input)
+	ret, err := service.Notification.FindForUser(v.db, &u, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -47,7 +69,7 @@ func (notification) List(w http.ResponseWriter, r *http.Request) {
 	muxie.Dispatch(w, muxie.JSON, out.Data(ret))
 }
 
-func (notification) MarkRead(w http.ResponseWriter, r *http.Request) {
+func (v Notification) MarkRead(w http.ResponseWriter, r *http.Request) {
 	notifyID := cast.ToUint(muxie.GetParam(w, "notificationID"))
 
 	var u model.User
@@ -57,9 +79,9 @@ func (notification) MarkRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = service.Notification.MarkAsRead(db.DB, &u, notifyID)
+	err = service.Notification.MarkAsRead(v.db, &u, notifyID)
 	if err != nil {
-		bog.Error("notification.MarkRead", zap.Error(err))
+		v.log.Error("notification.MarkRead", zap.Error(err))
 	}
 
 	muxie.Dispatch(w, muxie.JSON, out.Err(204, "操作成功"))

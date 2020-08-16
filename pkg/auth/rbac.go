@@ -16,7 +16,7 @@ import (
 )
 
 // RoleGuard 角色检查中间件
-func RoleGuard(db *pg.DB) muxie.Wrapper {
+func RoleGuard(db *pg.DB, conf *config.ServerConfig) muxie.Wrapper {
 	rbac, err := grbac.New(grbac.WithLoader(RoleRulesLoader(db), time.Minute))
 	if err != nil {
 		panic(err)
@@ -27,7 +27,7 @@ func RoleGuard(db *pg.DB) muxie.Wrapper {
 			assigned := []string{}
 			if token := r.Header.Get("Authorization"); strings.HasPrefix(token, "Bearer ") {
 				t, err := jwt.ParseWithClaims(token[7:], &RoleClaims{}, func(t *jwt.Token) (interface{}, error) {
-					return []byte(config.Server.Auth.Secret), nil
+					return []byte(conf.Auth.Secret), nil
 				})
 
 				if err == nil && t.Valid {
@@ -42,11 +42,9 @@ func RoleGuard(db *pg.DB) muxie.Wrapper {
 			if state.IsGranted() || strings.Contains(strings.Join(assigned, ","), "v0") {
 				next.ServeHTTP(w, r)
 			} else if len(assigned) > 0 { // 有角色说明令牌有效，那么自然是无权访问
-				w.WriteHeader(403)
 				muxie.Dispatch(w, muxie.JSON, out.Err(403, "您无权访问该对象"))
 			} else {
-				w.WriteHeader(401)
-				muxie.Dispatch(w, muxie.JSON, out.Err(401, "请登录"))
+				muxie.Dispatch(w, muxie.JSON, out.Err401)
 			}
 		})
 	}

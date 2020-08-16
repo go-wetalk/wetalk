@@ -8,6 +8,7 @@ import (
 func init() {
 	Setup(6, func(db *pg.DB, l *zap.Logger) error {
 		createTable(
+			db,
 			&siteConfig{},
 		)
 

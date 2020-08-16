@@ -12,6 +12,7 @@ import (
 func init() {
 	Setup(1, func(db *pg.DB, l *zap.Logger) error {
 		createTable(
+			db,
 			&admin{},
 			&adminLog{},
 			&role{},

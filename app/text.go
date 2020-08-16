@@ -1,38 +1,62 @@
+//+build wireinject
+
 package app
 
 import (
 	"appsrv/model"
-	"appsrv/pkg/bog"
-	"appsrv/pkg/db"
+	"appsrv/pkg"
+	"appsrv/pkg/config"
+	"appsrv/pkg/runtime"
 	"net/http"
 
+	"github.com/go-pg/pg/v9"
+	"github.com/google/wire"
 	"github.com/kataras/muxie"
+	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 )
 
-type Text struct{}
+type Text struct {
+	db   *pg.DB
+	log  *zap.Logger
+	mc   *minio.Client
+	conf *config.ServerConfig
+}
 
-func (Text) List(w http.ResponseWriter, r *http.Request) {
+func (v *Text) RegisterRoute(m muxie.SubMux) {
+	m.Handle("/texts/:textID", muxie.Methods().HandleFunc(http.MethodGet, v.AppView))
+}
+
+func NewTextController() runtime.Controller {
+	wire.Build(
+		pkg.ApplicationSet,
+		wire.Struct(new(Text), "*"),
+		wire.Bind(new(runtime.Controller), new(*Text)),
+	)
+	return nil
+}
+
+func (v Text) List(w http.ResponseWriter, r *http.Request) {
 	var ts = []model.Text{}
-	_ = db.DB.Model(&ts).Order("id ASC").Select()
+	_ = v.db.Model(&ts).Order("id ASC").Select()
 	muxie.Dispatch(w, muxie.JSON, &ts)
 }
 
-func (Text) Create(w http.ResponseWriter, r *http.Request) {
+func (v Text) Create(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		model.Text
 	}
 	err := muxie.Bind(r, muxie.JSON, &in)
 	if err != nil {
-		bog.Error("Text.Create", zap.Error(err))
+		v.log.Error("Text.Create", zap.Error(err))
 		w.WriteHeader(400)
 		return
 	}
 
-	err = db.DB.Insert(&in.Text)
+	err = v.db.Insert(&in.Text)
 	if err != nil {
-		bog.Error("Text.Create", zap.Error(err))
+		v.log.Error("Text.Create", zap.Error(err))
 		w.WriteHeader(500)
 		return
 	}
@@ -40,28 +64,28 @@ func (Text) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
-func (Text) Update(w http.ResponseWriter, r *http.Request) {
+func (v Text) Update(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Name    string
 		Content string
 	}
 	err := muxie.Bind(r, muxie.JSON, &in)
 	if err != nil {
-		bog.Error("Text.Update", zap.Error(err))
+		v.log.Error("Text.Update", zap.Error(err))
 		w.WriteHeader(400)
 		return
 	}
 
 	var t model.Text
-	err = db.DB.Model(&t).Where("id = ?", muxie.GetParam(w, "textID")).First()
+	err = v.db.Model(&t).Where("id = ?", muxie.GetParam(w, "textID")).First()
 	if err != nil {
 		w.WriteHeader(404)
 		return
 	}
 
-	_, err = db.DB.Model(&t).WherePK().Set("name = ?", in.Name).Set("content = ?", in.Content).Update()
+	_, err = v.db.Model(&t).WherePK().Set("name = ?", in.Name).Set("content = ?", in.Content).Update()
 	if err != nil {
-		bog.Error("Text.Update", zap.Error(err))
+		v.log.Error("Text.Update", zap.Error(err))
 		w.WriteHeader(500)
 		return
 	}
@@ -69,10 +93,10 @@ func (Text) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
-func (Text) AppView(w http.ResponseWriter, r *http.Request) {
+func (v Text) AppView(w http.ResponseWriter, r *http.Request) {
 	var t model.Text
 	textID := muxie.GetParam(w, "textID")
-	err := db.DB.Model(&t).Where("id = ? OR slot_name = ?", cast.ToUint(textID), textID).First()
+	err := v.db.Model(&t).Where("id = ? OR slot_name = ?", cast.ToUint(textID), textID).First()
 	if err != nil {
 		w.WriteHeader(404)
 		return

@@ -1,19 +1,22 @@
+//+build wireinject
+
 package app
 
 import (
 	"appsrv/model"
+	"appsrv/pkg"
 	"appsrv/pkg/auth"
-	"appsrv/pkg/bog"
 	"appsrv/pkg/config"
-	"appsrv/pkg/db"
-	"appsrv/pkg/oss"
 	"appsrv/pkg/out"
+	"appsrv/pkg/runtime"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/go-pg/pg/v9"
+	"github.com/google/wire"
 	"github.com/kataras/hcaptcha"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
@@ -22,9 +25,37 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct{}
+type User struct {
+	db   *pg.DB
+	log  *zap.Logger
+	mc   *minio.Client
+	conf *config.ServerConfig
 
-func (User) AppStatus(w http.ResponseWriter, r *http.Request) {
+	// userService *service.User
+}
+
+func (v *User) RegisterRoute(m muxie.SubMux) {
+	m.Handle("/users", muxie.Methods().HandleFunc(http.MethodPost, v.SignUp))
+	m.Handle("/tokens", muxie.Methods().HandleFunc(http.MethodPost, v.Login))
+	m.Handle("/status", muxie.Methods().HandleFunc(http.MethodGet, v.AppStatus))
+	m.Handle("/users/:name", muxie.Methods().HandleFunc(http.MethodGet, v.ViewUserDetail))
+	m.Handle("/profile", muxie.Methods().HandleFunc(http.MethodGet, v.ViewProfile))
+	m.Handle("/profile/logo", muxie.Methods().HandleFunc(http.MethodPut, v.UpdateLogo))
+	m.Handle("/profile/address", muxie.Methods().HandleFunc(http.MethodPut, v.UpdateAddress))
+	m.Handle("/profile/social", muxie.Methods().HandleFunc(http.MethodPut, v.UpdateSocial))
+	m.Handle("/profile/password", muxie.Methods().HandleFunc(http.MethodPut, v.UpdatePassword))
+}
+
+func NewUserController() runtime.Controller {
+	wire.Build(
+		pkg.ApplicationSet,
+		wire.Struct(new(User), "*"),
+		wire.Bind(new(runtime.Controller), new(*User)),
+	)
+	return nil
+}
+
+func (v *User) AppStatus(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -39,13 +70,13 @@ func (User) AppStatus(w http.ResponseWriter, r *http.Request) {
 		Coin:         u.Coin,
 		Created:      u.Created.Format("2006-01-02 15:04:05"),
 		RoleList:     u.RoleKeys,
-		UnreadNotify: u.UnreadNotify(),
+		UnreadNotify: u.UnreadNotify(v.db),
 	}
 
 	muxie.Dispatch(w, muxie.JSON, out.Data(us))
 }
 
-func (User) SignUp(w http.ResponseWriter, r *http.Request) {
+func (v *User) SignUp(w http.ResponseWriter, r *http.Request) {
 	var input schema.UserSignUpInput
 	err := muxie.Bind(r, muxie.JSON, &input)
 	if err != nil {
@@ -58,15 +89,15 @@ func (User) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if config.Server.HCaptcha.Enabled {
-		hcc := hcaptcha.New(config.Server.HCaptcha.Secret)
+	if config.ProvideSingleton().HCaptcha.Enabled {
+		hcc := hcaptcha.New(config.ProvideSingleton().HCaptcha.Secret)
 		if resp := hcc.VerifyToken(input.Captcha); !resp.Success {
 			muxie.Dispatch(w, muxie.JSON, out.Err(400, resp.ChallengeTS))
 			return
 		}
 	}
 
-	u, err := service.User{}.CreateWithInput(db.DB, input)
+	u, err := service.User{}.CreateWithInput(v.db, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -89,11 +120,11 @@ func (User) SignUp(w http.ResponseWriter, r *http.Request) {
 	raw.User.Gender = u.Gender
 	raw.User.Created = u.Created.Format("2006-01-02 15:04:05")
 	raw.User.RoleList = u.RoleKeys
-	raw.User.UnreadNotify = u.UnreadNotify()
+	raw.User.UnreadNotify = u.UnreadNotify(v.db)
 	muxie.Dispatch(w, muxie.JSON, out.Data(raw))
 }
 
-func (User) Login(w http.ResponseWriter, r *http.Request) {
+func (v *User) Login(w http.ResponseWriter, r *http.Request) {
 	var input schema.UserSignUpInput
 	err := muxie.Bind(r, muxie.JSON, &input)
 	if err != nil {
@@ -106,7 +137,7 @@ func (User) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := service.User{}.FindWithCredential(db.DB, input)
+	u, err := service.User{}.FindWithCredential(v.db, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -129,13 +160,13 @@ func (User) Login(w http.ResponseWriter, r *http.Request) {
 	raw.User.Gender = u.Gender
 	raw.User.Created = u.Created.Format("2006-01-02 15:04:05")
 	raw.User.RoleList = u.RoleKeys
-	raw.User.UnreadNotify = u.UnreadNotify()
+	raw.User.UnreadNotify = u.UnreadNotify(v.db)
 	muxie.Dispatch(w, muxie.JSON, out.Data(raw))
 }
 
-func (User) ViewUserDetail(w http.ResponseWriter, r *http.Request) {
+func (v *User) ViewUserDetail(w http.ResponseWriter, r *http.Request) {
 	name := muxie.GetParam(w, "name")
-	u, err := service.User{}.FindByName(db.DB, strings.TrimSpace(name))
+	u, err := service.User{}.FindByName(v.db, strings.TrimSpace(name))
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -150,7 +181,7 @@ func (User) ViewUserDetail(w http.ResponseWriter, r *http.Request) {
 	muxie.Dispatch(w, muxie.JSON, out.Data(raw))
 }
 
-func (User) ViewProfile(w http.ResponseWriter, r *http.Request) {
+func (v *User) ViewProfile(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -161,7 +192,7 @@ func (User) ViewProfile(w http.ResponseWriter, r *http.Request) {
 	muxie.Dispatch(w, muxie.JSON, out.Data(u))
 }
 
-func (User) UpdateLogo(w http.ResponseWriter, r *http.Request) {
+func (v *User) UpdateLogo(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -177,7 +208,7 @@ func (User) UpdateLogo(w http.ResponseWriter, r *http.Request) {
 
 	objectPath := time.Now().Format("20060102") + "/" + h.Filename
 
-	_, err = oss.Min.PutObject(oss.Bucket, objectPath, f, h.Size, minio.PutObjectOptions{
+	_, err = v.mc.PutObject(v.conf.Oss.Bucket, objectPath, f, h.Size, minio.PutObjectOptions{
 		ContentType: h.Header.Get("Content-Type"),
 	})
 	if err != nil {
@@ -185,9 +216,9 @@ func (User) UpdateLogo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Model(&u).WherePK().Set("logo_path = ?", objectPath).Update()
+	_, err = v.db.Model(&u).WherePK().Set("logo_path = ?", objectPath).Update()
 	if err != nil {
-		bog.Error(err.Error(), zap.Error(err))
+		v.log.Error(err.Error(), zap.Error(err))
 		muxie.Dispatch(w, muxie.JSON, out.Err500)
 		return
 	}
@@ -195,7 +226,7 @@ func (User) UpdateLogo(w http.ResponseWriter, r *http.Request) {
 	muxie.Dispatch(w, muxie.JSON, out.Data(nil))
 }
 
-func (User) UpdateAddress(w http.ResponseWriter, r *http.Request) {
+func (v *User) UpdateAddress(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -210,11 +241,11 @@ func (User) UpdateAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Model(&u).WherePK().
+	_, err = v.db.Model(&u).WherePK().
 		Set("country = ?, province = ?, city = ?, street = ?", input.Country, input.Province, input.City, input.Street).
 		Update()
 	if err != nil {
-		bog.Error(err.Error(), zap.Error(err))
+		v.log.Error(err.Error(), zap.Error(err))
 		muxie.Dispatch(w, muxie.JSON, out.Err500)
 		return
 	}
@@ -222,7 +253,7 @@ func (User) UpdateAddress(w http.ResponseWriter, r *http.Request) {
 	muxie.Dispatch(w, muxie.JSON, out.Data(nil))
 }
 
-func (User) UpdateSocial(w http.ResponseWriter, r *http.Request) {
+func (v *User) UpdateSocial(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -237,11 +268,11 @@ func (User) UpdateSocial(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Model(&u).WherePK().
+	_, err = v.db.Model(&u).WherePK().
 		Set("sign = ?", input.Sign).
 		Update()
 	if err != nil {
-		bog.Error(err.Error(), zap.Error(err))
+		v.log.Error(err.Error(), zap.Error(err))
 		muxie.Dispatch(w, muxie.JSON, out.Err500)
 		return
 	}
@@ -249,7 +280,7 @@ func (User) UpdateSocial(w http.ResponseWriter, r *http.Request) {
 	muxie.Dispatch(w, muxie.JSON, out.Data(nil))
 }
 
-func (User) UpdatePassword(w http.ResponseWriter, r *http.Request) {
+func (v *User) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -276,11 +307,11 @@ func (User) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Model(&u).WherePK().
+	_, err = v.db.Model(&u).WherePK().
 		Set("password = ?", string(b)).
 		Update()
 	if err != nil {
-		bog.Error(err.Error(), zap.Error(err))
+		v.log.Error(err.Error(), zap.Error(err))
 		muxie.Dispatch(w, muxie.JSON, out.Err500)
 		return
 	}

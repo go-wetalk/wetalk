@@ -1,24 +1,50 @@
+//+build wireinject
+
 package app
 
 import (
 	"appsrv/model"
+	"appsrv/pkg"
 	"appsrv/pkg/auth"
-	"appsrv/pkg/db"
+	"appsrv/pkg/config"
 	"appsrv/pkg/out"
+	"appsrv/pkg/runtime"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
 
+	"github.com/go-pg/pg/v9"
+	"github.com/google/wire"
 	"github.com/kataras/muxie"
+	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
+	"go.uber.org/zap"
 )
 
-var Comment = new(comment)
+type Comment struct {
+	db   *pg.DB
+	log  *zap.Logger
+	mc   *minio.Client
+	conf *config.ServerConfig
+}
 
-type comment struct{}
+func (v *Comment) RegisterRoute(m muxie.SubMux) {
+	m.Handle("/comments", muxie.Methods().
+		HandleFunc(http.MethodGet, v.ListByFilter).
+		HandleFunc(http.MethodPost, v.CreateTopicComment))
+}
+
+func NewCommentController() runtime.Controller {
+	wire.Build(
+		pkg.ApplicationSet,
+		wire.Struct(new(Comment), "*"),
+		wire.Bind(new(runtime.Controller), new(*Comment)),
+	)
+	return nil
+}
 
 // CreateTopicComment 发表帖子评论
-func (comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
+func (v Comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -38,7 +64,7 @@ func (comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := service.Comment.CreateTopicComment(db.DB, u, input)
+	c, err := service.Comment.CreateTopicComment(v.db, u, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -47,7 +73,7 @@ func (comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
 	muxie.Dispatch(w, muxie.JSON, out.Data(c))
 }
 
-func (comment) ListByFilter(w http.ResponseWriter, r *http.Request) {
+func (v Comment) ListByFilter(w http.ResponseWriter, r *http.Request) {
 	input := schema.CommentFilter{}
 	input.TopicID = cast.ToUint(r.URL.Query().Get("tid"))
 	input.Page = cast.ToInt(r.URL.Query().Get("p"))
@@ -59,7 +85,7 @@ func (comment) ListByFilter(w http.ResponseWriter, r *http.Request) {
 		input.Size = 20
 	}
 
-	cs, err := service.Comment.FindByFilterInput(db.DB, input)
+	cs, err := service.Comment.FindByFilterInput(v.db, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return

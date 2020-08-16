@@ -6,14 +6,21 @@ import (
 	goredis "github.com/go-redis/redis/v7"
 )
 
-var Redis *goredis.Client
+var rc *goredis.Client
 
-func InitRedis(c config.RedisConfig) error {
-	Redis = goredis.NewClient(&goredis.Options{
-		Addr:     c.Addr,
-		Password: c.Password,
-		DB:       c.DB,
-	})
+func ProvideSingleton() *goredis.Client {
+	if rc == nil {
+		srvConf := config.ProvideSingleton()
+		rc = goredis.NewClient(&goredis.Options{
+			Addr:     srvConf.Redis.Addr,
+			Password: srvConf.Redis.Password,
+			DB:       srvConf.Redis.DB,
+		})
 
-	return Redis.Ping().Err()
+		if err := rc.Ping().Err(); err != nil {
+			panic(err)
+		}
+	}
+
+	return rc
 }

@@ -1,15 +1,24 @@
-package app
+package admin
 
 import (
+	"appsrv/pkg/config"
 	"appsrv/pkg/db"
 	"net/http"
 	"time"
 
+	"github.com/go-pg/pg/v9"
 	"github.com/kataras/muxie"
+	"github.com/minio/minio-go/v6"
+	"go.uber.org/zap"
 )
 
 // Stat 数据统计、报表相关逻辑
-type Stat struct{}
+type Stat struct {
+	db   *pg.DB
+	log  *zap.Logger
+	mc   *minio.Client
+	conf *config.ServerConfig
+}
 
 func (Stat) Summary(w http.ResponseWriter, r *http.Request) {
 	var out struct {

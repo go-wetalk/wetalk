@@ -7,41 +7,41 @@ import (
 )
 
 var (
-	Bucket   = ""
-	Endpoint = ""
-	Server   = ""
+	Server = ""
 )
 
-var Min *minio.Client
+var mc *minio.Client
 
-// InitOss 获取对象存储操作实例
-func InitOss(c config.OssConfig) (err error) {
-	Min, err = minio.New(c.Endpoint, c.Access, c.Secret, c.Secure)
-	if err != nil {
-		return
-	}
-
-	exist, err := Min.BucketExists(c.Bucket)
-	if err != nil {
-		return
-	}
-
-	if !exist {
-		err = Min.MakeBucket(c.Bucket, "")
+// ProvideSingleton provides singleton instance of minio.Client.
+func ProvideSingleton() *minio.Client {
+	if mc == nil {
+		var err error
+		srvConf := config.ProvideSingleton()
+		mc, err = minio.New(srvConf.Oss.Endpoint, srvConf.Oss.Access, srvConf.Oss.Secret, srvConf.Oss.Secure)
 		if err != nil {
-			return
+			panic(err)
 		}
 
-		policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:GetObject"],"Effect": "Allow","Principal": {"AWS": ["*"]},"Resource": ["arn:aws:s3:::` + c.Bucket + `/*"],"Sid": ""}]}`
-		err = Min.SetBucketPolicy(c.Bucket, policy)
+		exist, err := mc.BucketExists(srvConf.Oss.Bucket)
 		if err != nil {
-			return err
+			panic(err)
 		}
+
+		if !exist {
+			err = mc.MakeBucket(srvConf.Oss.Bucket, "")
+			if err != nil {
+				panic(err)
+			}
+
+			policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:GetObject"],"Effect": "Allow","Principal": {"AWS": ["*"]},"Resource": ["arn:aws:s3:::` + srvConf.Oss.Bucket + `/*"],"Sid": ""}]}`
+			err = mc.SetBucketPolicy(srvConf.Oss.Bucket, policy)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		Server = mc.EndpointURL().String() + "/" + srvConf.Oss.Bucket
 	}
 
-	Bucket = c.Bucket
-	Endpoint = c.Endpoint
-	Server = Min.EndpointURL().String() + "/" + Bucket
-
-	return err
+	return mc
 }
