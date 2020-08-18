@@ -9,6 +9,6 @@ func init() {
 		Use:   "serve",
 		Short: "start and serve HTTP server.",
 	}
-	serve.AddCommand(createServeAppCommand(), createServeAdminCommand())
+	serve.AddCommand(createServeAppCommand())
 	RootCommand.AddCommand(&serve)
 }
