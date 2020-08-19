@@ -1,16 +1,11 @@
-//+build wireinject
-
 package app
 
 import (
 	"appsrv/model"
-	"appsrv/pkg"
 	"appsrv/pkg/config"
-	"appsrv/pkg/runtime"
 	"net/http"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/wire"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
@@ -26,15 +21,6 @@ type Text struct {
 
 func (v *Text) RegisterRoute(m muxie.SubMux) {
 	m.Handle("/texts/:textID", muxie.Methods().HandleFunc(http.MethodGet, v.AppView))
-}
-
-func NewTextController() runtime.Controller {
-	wire.Build(
-		pkg.ApplicationSet,
-		wire.Struct(new(Text), "*"),
-		wire.Bind(new(runtime.Controller), new(*Text)),
-	)
-	return nil
 }
 
 func (v Text) List(w http.ResponseWriter, r *http.Request) {

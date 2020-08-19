@@ -1,20 +1,15 @@
-//+build wireinject
-
 package app
 
 import (
 	"appsrv/model"
-	"appsrv/pkg"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/config"
 	"appsrv/pkg/out"
-	"appsrv/pkg/runtime"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/wire"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
@@ -31,15 +26,6 @@ type Notification struct {
 func (v *Notification) RegisterRoute(m muxie.SubMux) {
 	m.Handle("/notifications", muxie.Methods().HandleFunc(http.MethodGet, v.List))
 	m.Handle("/notifications/:notificationID", muxie.Methods().HandleFunc(http.MethodDelete, v.MarkRead))
-}
-
-func NewNotificationController() runtime.Controller {
-	wire.Build(
-		pkg.ApplicationSet,
-		wire.Struct(new(Notification), "*"),
-		wire.Bind(new(runtime.Controller), new(*Notification)),
-	)
-	return nil
 }
 
 func (v Notification) List(w http.ResponseWriter, r *http.Request) {

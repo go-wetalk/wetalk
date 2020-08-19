@@ -1,18 +1,13 @@
-//+build wireinject
-
 package app
 
 import (
 	"appsrv/model"
-	"appsrv/pkg"
 	"appsrv/pkg/config"
 	"appsrv/pkg/out"
-	"appsrv/pkg/runtime"
 	"net/http"
 	"time"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/wire"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"go.uber.org/zap"
@@ -27,15 +22,6 @@ type Announce struct {
 
 func (v *Announce) RegisterRoute(m muxie.SubMux) {
 	m.Handle("/announces", muxie.Methods().HandleFunc(http.MethodGet, v.AppList))
-}
-
-func NewAnnounceController() runtime.Controller {
-	wire.Build(
-		pkg.ApplicationSet,
-		wire.Struct(new(Announce), "*"),
-		wire.Bind(new(runtime.Controller), new(*Announce)),
-	)
-	return nil
 }
 
 func (v Announce) List(w http.ResponseWriter, r *http.Request) {

@@ -25,15 +25,6 @@ type User struct {
 	conf *config.ServerConfig
 }
 
-func NewUserService(db *pg.DB, log *zap.Logger, mc *minio.Client, conf *config.ServerConfig) *User {
-	return &User{
-		db:   db,
-		log:  log,
-		mc:   mc,
-		conf: conf,
-	}
-}
-
 type UserCreateInput model.User
 
 func (User) Create(db *pg.DB, u UserCreateInput) (model.User, error) {

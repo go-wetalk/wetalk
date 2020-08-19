@@ -1,5 +1,3 @@
-//+build wireinject
-
 package app
 
 import (

@@ -1,18 +1,13 @@
-//+build wireinject
-
 package app
 
 import (
 	"appsrv/model"
-	"appsrv/pkg"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/config"
-	"appsrv/pkg/runtime"
 	"net/http"
 	"time"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/wire"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
@@ -31,15 +26,6 @@ func (v *Task) RegisterRoute(m muxie.SubMux) {
 		HandleFunc(http.MethodGet, v.AppList))
 	m.Handle("/tasks/:taskID/bonus", muxie.Methods().
 		HandleFunc(http.MethodPost, v.AppTaskLogCreate))
-}
-
-func NewTaskController() runtime.Controller {
-	wire.Build(
-		pkg.ApplicationSet,
-		wire.Struct(new(Task), "*"),
-		wire.Bind(new(runtime.Controller), new(*Task)),
-	)
-	return nil
 }
 
 func (v Task) List(w http.ResponseWriter, r *http.Request) {

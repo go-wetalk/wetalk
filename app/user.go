@@ -1,14 +1,10 @@
-//+build wireinject
-
 package app
 
 import (
 	"appsrv/model"
-	"appsrv/pkg"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/config"
 	"appsrv/pkg/out"
-	"appsrv/pkg/runtime"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
@@ -16,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/wire"
 	"github.com/kataras/hcaptcha"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
@@ -31,7 +26,7 @@ type User struct {
 	mc   *minio.Client
 	conf *config.ServerConfig
 
-	// userService *service.User
+	userService *service.User
 }
 
 func (v *User) RegisterRoute(m muxie.SubMux) {
@@ -44,15 +39,6 @@ func (v *User) RegisterRoute(m muxie.SubMux) {
 	m.Handle("/profile/address", muxie.Methods().HandleFunc(http.MethodPut, v.UpdateAddress))
 	m.Handle("/profile/social", muxie.Methods().HandleFunc(http.MethodPut, v.UpdateSocial))
 	m.Handle("/profile/password", muxie.Methods().HandleFunc(http.MethodPut, v.UpdatePassword))
-}
-
-func NewUserController() runtime.Controller {
-	wire.Build(
-		pkg.ApplicationSet,
-		wire.Struct(new(User), "*"),
-		wire.Bind(new(runtime.Controller), new(*User)),
-	)
-	return nil
 }
 
 func (v *User) AppStatus(w http.ResponseWriter, r *http.Request) {

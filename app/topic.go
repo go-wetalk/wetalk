@@ -1,21 +1,16 @@
-//+build wireinject
-
 package app
 
 import (
 	"appsrv/model"
-	"appsrv/pkg"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/config"
 	"appsrv/pkg/out"
-	"appsrv/pkg/runtime"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
 	"strings"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/wire"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
@@ -37,15 +32,6 @@ func (v *Topic) RegisterRoute(m muxie.SubMux) {
 
 	m.Handle("/topics/:topicID", muxie.Methods().
 		HandleFunc(http.MethodGet, v.Find))
-}
-
-func NewTopicController() runtime.Controller {
-	wire.Build(
-		pkg.ApplicationSet,
-		wire.Struct(new(Topic), "*"),
-		wire.Bind(new(runtime.Controller), new(*Topic)),
-	)
-	return nil
 }
 
 // List 取出话题列表

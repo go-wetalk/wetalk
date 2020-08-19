@@ -1,35 +1,18 @@
-//+build wireinject
-
 package cmd
 
 import (
 	"appsrv/app"
-	"appsrv/pkg"
-	"appsrv/pkg/auth"
 	"appsrv/pkg/config"
 	"appsrv/pkg/runtime"
 	"appsrv/sql"
 	"context"
 	"net/http"
 
-	"github.com/google/wire"
+	"github.com/go-pg/pg/v9"
 	"github.com/kataras/muxie"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
-
-func createServeAppCommand() *cobra.Command {
-	wire.Build(
-		pkg.ApplicationSet,
-		auth.RoleGuard,
-		createServerMux,
-		resolveControllerSet,
-		createServerRunner,
-		createApplicationRunner,
-	)
-
-	return nil
-}
 
 type Runner func(context.Context)
 
@@ -72,8 +55,8 @@ func createServerMux(wrapper muxie.Wrapper, cs []runtime.Controller) *muxie.Mux 
 	return m
 }
 
-func createServerRunner(m *muxie.Mux, log *zap.Logger, conf *config.ServerConfig) Runner {
-	sql.Run()
+func createServerRunner(m *muxie.Mux, db *pg.DB, log *zap.Logger, conf *config.ServerConfig) Runner {
+	sql.Run(db, log)
 
 	if conf.Port == "" {
 		conf.Port = ":8080"

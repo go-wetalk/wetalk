@@ -1,20 +1,15 @@
-//+build wireinject
-
 package app
 
 import (
 	"appsrv/model"
-	"appsrv/pkg"
 	"appsrv/pkg/auth"
 	"appsrv/pkg/config"
 	"appsrv/pkg/out"
-	"appsrv/pkg/runtime"
 	"appsrv/schema"
 	"appsrv/service"
 	"net/http"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/wire"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
@@ -32,15 +27,6 @@ func (v *Comment) RegisterRoute(m muxie.SubMux) {
 	m.Handle("/comments", muxie.Methods().
 		HandleFunc(http.MethodGet, v.ListByFilter).
 		HandleFunc(http.MethodPost, v.CreateTopicComment))
-}
-
-func NewCommentController() runtime.Controller {
-	wire.Build(
-		pkg.ApplicationSet,
-		wire.Struct(new(Comment), "*"),
-		wire.Bind(new(runtime.Controller), new(*Comment)),
-	)
-	return nil
 }
 
 // CreateTopicComment 发表帖子评论
