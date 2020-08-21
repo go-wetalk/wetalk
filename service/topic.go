@@ -103,7 +103,7 @@ func (v *Topic) FindByID(id uint) (*schema.Topic, error) {
 	t := model.Topic{}
 	err := v.db.Model(&t).Relation("User").Where("topic.id = ?", id).First()
 	if err != nil {
-		return nil, out.Err500
+		return nil, err
 	}
 
 	item := schema.TopicListItem{}

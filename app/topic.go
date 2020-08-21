@@ -91,7 +91,7 @@ func (v *Topic) Find(w http.ResponseWriter, r *http.Request) {
 	topicID := cast.ToUint(muxie.GetParam(w, "topicID"))
 	t, err := v.topicService.FindByID(topicID)
 	if err != nil {
-		muxie.Dispatch(w, muxie.JSON, out.Err500)
+		muxie.Dispatch(w, muxie.JSON, out.OR(err == pg.ErrNoRows, out.New(404, "没有查询到相关信息", nil), out.Err500))
 		return
 	}
 

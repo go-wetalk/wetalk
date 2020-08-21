@@ -54,6 +54,14 @@ func Err(code int, msg string) Bucket {
 	}
 }
 
+// OR returns leftValue when cond is true, or returns rightValue.
+func OR(cond bool, leftValue interface{}, rightValue interface{}) interface{} {
+	if cond {
+		return leftValue
+	}
+	return rightValue
+}
+
 // Bucket details HTTP server error.
 type Bucket struct {
 	Code    int
