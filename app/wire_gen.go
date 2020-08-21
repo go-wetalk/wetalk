@@ -37,13 +37,15 @@ func NewTopicController() runtime.Controller {
 	logger := bog.ProvideSingleton()
 	client := oss.ProvideSingleton()
 	serverConfig := config.ProvideSingleton()
-	topic := &Topic{
-		db:   pgDB,
-		log:  logger,
-		mc:   client,
-		conf: serverConfig,
+	topic := service.NewTopicService()
+	appTopic := &Topic{
+		db:           pgDB,
+		log:          logger,
+		mc:           client,
+		conf:         serverConfig,
+		topicService: topic,
 	}
-	return topic
+	return appTopic
 }
 
 func NewTextController() runtime.Controller {
@@ -79,13 +81,15 @@ func NewNotificationController() runtime.Controller {
 	logger := bog.ProvideSingleton()
 	client := oss.ProvideSingleton()
 	serverConfig := config.ProvideSingleton()
-	notification := &Notification{
-		db:   pgDB,
-		log:  logger,
-		mc:   client,
-		conf: serverConfig,
+	notification := service.NewNotificationService()
+	appNotification := &Notification{
+		db:                  pgDB,
+		log:                 logger,
+		mc:                  client,
+		conf:                serverConfig,
+		notificationService: notification,
 	}
-	return notification
+	return appNotification
 }
 
 func NewCommentController() runtime.Controller {
@@ -93,13 +97,15 @@ func NewCommentController() runtime.Controller {
 	logger := bog.ProvideSingleton()
 	client := oss.ProvideSingleton()
 	serverConfig := config.ProvideSingleton()
-	comment := &Comment{
-		db:   pgDB,
-		log:  logger,
-		mc:   client,
-		conf: serverConfig,
+	comment := service.NewCommentService()
+	appComment := &Comment{
+		db:             pgDB,
+		log:            logger,
+		mc:             client,
+		conf:           serverConfig,
+		commentService: comment,
 	}
-	return comment
+	return appComment
 }
 
 func NewAnnounceController() runtime.Controller {

@@ -17,10 +17,11 @@ import (
 )
 
 type Notification struct {
-	db   *pg.DB
-	log  *zap.Logger
-	mc   *minio.Client
-	conf *config.ServerConfig
+	db                  *pg.DB
+	log                 *zap.Logger
+	mc                  *minio.Client
+	conf                *config.ServerConfig
+	notificationService *service.Notification
 }
 
 func (v *Notification) RegisterRoute(m muxie.SubMux) {
@@ -46,7 +47,7 @@ func (v Notification) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret, err := service.Notification.FindForUser(v.db, &u, input)
+	ret, err := v.notificationService.FindForUser(&u, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -65,7 +66,7 @@ func (v Notification) MarkRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = service.Notification.MarkAsRead(v.db, &u, notifyID)
+	err = v.notificationService.MarkAsRead(&u, notifyID)
 	if err != nil {
 		v.log.Error("notification.MarkRead", zap.Error(err))
 	}

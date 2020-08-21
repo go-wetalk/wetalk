@@ -15,21 +15,20 @@ import (
 	"go.uber.org/zap"
 )
 
-var Topic *topic
-
-type topic struct {
+// Topic 主题相关DB操作
+type Topic struct {
 	db  *pg.DB
 	log *zap.Logger
 }
 
 // ListWithRankByScore 综合评分进行排序的主题列表
-func (v *topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) (*schema.Pagination, error) {
+func (v *Topic) ListWithRankByScore(input schema.TopicListInput) (*schema.Pagination, error) {
 	pag := schema.Pagination{
 		PerPage: input.Size,
 	}
 
 	ts := []model.Topic{}
-	q := db.Model(&ts).Column("topic.id", "topic.title", "topic.user_id", "topic.created", "topic.tags").
+	q := v.db.Model(&ts).Column("topic.id", "topic.title", "topic.user_id", "topic.created", "topic.tags").
 		Relation("User").
 		Order("topic.id DESC").
 		Offset((input.Page - 1) * input.Size).Limit(input.Size)
@@ -60,7 +59,7 @@ func (v *topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) (*sc
 			}
 		}
 
-		if lastComment, err := t.LastComment(db); err == nil && lastComment != nil {
+		if lastComment, err := t.LastComment(v.db); err == nil && lastComment != nil {
 			item.LastComment = &schema.CommentBadge{
 				ID:      lastComment.ID,
 				TopicID: lastComment.TopicID,
@@ -82,7 +81,7 @@ func (v *topic) ListWithRankByScore(db *pg.DB, input schema.TopicListInput) (*sc
 }
 
 // Create 创建主题
-func (v *topic) Create(db *pg.DB, u model.User, input schema.TopicCreateInput) (*model.Topic, error) {
+func (v *Topic) Create(u model.User, input schema.TopicCreateInput) (*model.Topic, error) {
 	lu := lute.New()
 	t := model.Topic{}
 	t.Title = input.Title
@@ -95,14 +94,14 @@ func (v *topic) Create(db *pg.DB, u model.User, input schema.TopicCreateInput) (
 		}
 	}
 
-	err := db.Insert(&t)
+	err := v.db.Insert(&t)
 	return &t, err
 }
 
 // FindByID 查找主题
-func (v *topic) FindByID(db *pg.DB, id uint) (*schema.Topic, error) {
+func (v *Topic) FindByID(id uint) (*schema.Topic, error) {
 	t := model.Topic{}
-	err := db.Model(&t).Relation("User").Where("topic.id = ?", id).First()
+	err := v.db.Model(&t).Relation("User").Where("topic.id = ?", id).First()
 	if err != nil {
 		return nil, out.Err500
 	}
@@ -121,7 +120,7 @@ func (v *topic) FindByID(db *pg.DB, id uint) (*schema.Topic, error) {
 		}
 	}
 
-	if lastComment, err := t.LastComment(db); err == nil && lastComment != nil {
+	if lastComment, err := t.LastComment(v.db); err == nil && lastComment != nil {
 		item.LastComment = &schema.CommentBadge{
 			ID:      lastComment.ID,
 			TopicID: lastComment.TopicID,

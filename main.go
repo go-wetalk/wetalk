@@ -1,3 +1,6 @@
+//go:generate wire ./service
+//go:generate wire ./app
+
 package main
 
 import (

@@ -45,6 +45,7 @@ func (v *User) AppStatus(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
+		muxie.Dispatch(w, muxie.JSON, err)
 		return
 	}
 
@@ -75,15 +76,15 @@ func (v *User) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if config.ProvideSingleton().HCaptcha.Enabled {
-		hcc := hcaptcha.New(config.ProvideSingleton().HCaptcha.Secret)
+	if v.conf.HCaptcha.Enabled {
+		hcc := hcaptcha.New(v.conf.HCaptcha.Secret)
 		if resp := hcc.VerifyToken(input.Captcha); !resp.Success {
 			muxie.Dispatch(w, muxie.JSON, out.Err(400, resp.ChallengeTS))
 			return
 		}
 	}
 
-	u, err := service.User{}.CreateWithInput(v.db, input)
+	u, err := v.userService.CreateWithInput(input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -123,7 +124,7 @@ func (v *User) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := service.User{}.FindWithCredential(v.db, input)
+	u, err := v.userService.FindWithCredential(input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -152,7 +153,7 @@ func (v *User) Login(w http.ResponseWriter, r *http.Request) {
 
 func (v *User) ViewUserDetail(w http.ResponseWriter, r *http.Request) {
 	name := muxie.GetParam(w, "name")
-	u, err := service.User{}.FindByName(v.db, strings.TrimSpace(name))
+	u, err := v.userService.FindByName(strings.TrimSpace(name))
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return

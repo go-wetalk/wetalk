@@ -17,10 +17,11 @@ import (
 )
 
 type Comment struct {
-	db   *pg.DB
-	log  *zap.Logger
-	mc   *minio.Client
-	conf *config.ServerConfig
+	db             *pg.DB
+	log            *zap.Logger
+	mc             *minio.Client
+	conf           *config.ServerConfig
+	commentService *service.Comment
 }
 
 func (v *Comment) RegisterRoute(m muxie.SubMux) {
@@ -46,11 +47,11 @@ func (v Comment) CreateTopicComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = input.Validate(); err != nil {
-		muxie.Dispatch(w, muxie.JSON, err)
+		muxie.Dispatch(w, muxie.JSON, out.Err(400, err.Error()))
 		return
 	}
 
-	c, err := service.Comment.CreateTopicComment(v.db, u, input)
+	c, err := v.commentService.CreateTopicComment(u, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return
@@ -71,7 +72,7 @@ func (v Comment) ListByFilter(w http.ResponseWriter, r *http.Request) {
 		input.Size = 20
 	}
 
-	cs, err := service.Comment.FindByFilterInput(v.db, input)
+	cs, err := v.commentService.FindByFilterInput(input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, err)
 		return

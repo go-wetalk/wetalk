@@ -18,6 +18,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// User 用户相关DB操作
 type User struct {
 	db   *pg.DB
 	log  *zap.Logger
@@ -25,25 +26,12 @@ type User struct {
 	conf *config.ServerConfig
 }
 
-type UserCreateInput model.User
-
-func (User) Create(db *pg.DB, u UserCreateInput) (model.User, error) {
-	err := db.Insert(&u)
-	return model.User(u), err
-}
-
-func (User) List(db *pg.DB) ([]model.User, error) {
-	var users = []model.User{}
-	err := db.Model(&users).Order("id ASC").Select()
-	return users, err
-}
-
 // CreateWithInput 账号注册
-func (v User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.User, error) {
+func (v *User) CreateWithInput(input schema.UserSignUpInput) (*model.User, error) {
 	input.Username = strings.TrimSpace(input.Username)
 
 	var u model.User
-	n, err := db.Model(&u).Where("name = ?", strings.ToLower(input.Username)).Count()
+	n, err := v.db.Model(&u).Where("name = ?", strings.ToLower(input.Username)).Count()
 	if err != nil {
 		return nil, out.Err(500, err.Error())
 	}
@@ -83,7 +71,7 @@ func (v User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.U
 		return nil, out.Err500
 	}
 
-	err = db.Insert(&u)
+	err = v.db.Insert(&u)
 	if err != nil {
 		return nil, out.Err500
 	}
@@ -92,9 +80,9 @@ func (v User) CreateWithInput(db *pg.DB, input schema.UserSignUpInput) (*model.U
 }
 
 // FindWithCredential 根据凭据查找对应用户
-func (User) FindWithCredential(db *pg.DB, input schema.UserSignUpInput) (*model.User, error) {
+func (v *User) FindWithCredential(input schema.UserSignUpInput) (*model.User, error) {
 	var u model.User
-	err := db.Model(&u).Where("name = ? OR name = ?", input.Username, strings.ToLower(input.Username)).First()
+	err := v.db.Model(&u).Where("name = ? OR name = ?", input.Username, strings.ToLower(input.Username)).First()
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, out.Err(400, "该用户不存在")
@@ -111,9 +99,9 @@ func (User) FindWithCredential(db *pg.DB, input schema.UserSignUpInput) (*model.
 }
 
 // FindByName 根据给定名称查找对应用户
-func (User) FindByName(db *pg.DB, name string) (*model.User, error) {
+func (v *User) FindByName(name string) (*model.User, error) {
 	var u model.User
-	err := db.Model(&u).Where("name = ? OR name = ?", name, strings.ToLower(name)).First()
+	err := v.db.Model(&u).Where("name = ? OR name = ?", name, strings.ToLower(name)).First()
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, out.ErrNotFound

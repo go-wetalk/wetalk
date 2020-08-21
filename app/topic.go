@@ -19,10 +19,11 @@ import (
 
 // Topic 话题
 type Topic struct {
-	db   *pg.DB
-	log  *zap.Logger
-	mc   *minio.Client
-	conf *config.ServerConfig
+	db           *pg.DB
+	log          *zap.Logger
+	mc           *minio.Client
+	conf         *config.ServerConfig
+	topicService *service.Topic
 }
 
 func (v *Topic) RegisterRoute(m muxie.SubMux) {
@@ -35,7 +36,7 @@ func (v *Topic) RegisterRoute(m muxie.SubMux) {
 }
 
 // List 取出话题列表
-func (v Topic) List(w http.ResponseWriter, r *http.Request) {
+func (v *Topic) List(w http.ResponseWriter, r *http.Request) {
 	input := schema.TopicListInput{}
 	input.Size = cast.ToInt(r.URL.Query().Get("s"))
 	if input.Size < 1 {
@@ -49,12 +50,12 @@ func (v Topic) List(w http.ResponseWriter, r *http.Request) {
 		input.Tag = strings.TrimSpace(t)
 	}
 
-	ts, _ := service.Topic.ListWithRankByScore(v.db, input)
+	ts, _ := v.topicService.ListWithRankByScore(input)
 	muxie.Dispatch(w, muxie.JSON, out.Data(ts))
 }
 
 // Create 创建话题
-func (v Topic) Create(w http.ResponseWriter, r *http.Request) {
+func (v *Topic) Create(w http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := auth.GetUser(r, &u)
 	if err != nil {
@@ -72,11 +73,11 @@ func (v Topic) Create(w http.ResponseWriter, r *http.Request) {
 	input.Title = strings.TrimSpace(input.Title)
 	input.Content = strings.TrimSpace(input.Content)
 	if err = input.Validate(); err != nil {
-		muxie.Dispatch(w, muxie.JSON, err)
+		muxie.Dispatch(w, muxie.JSON, out.Err(400, err.Error()))
 		return
 	}
 
-	t, err := service.Topic.Create(v.db, u, input)
+	t, err := v.topicService.Create(u, input)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, out.Err500)
 		return
@@ -86,9 +87,9 @@ func (v Topic) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // Find 查看话题详情
-func (v Topic) Find(w http.ResponseWriter, r *http.Request) {
+func (v *Topic) Find(w http.ResponseWriter, r *http.Request) {
 	topicID := cast.ToUint(muxie.GetParam(w, "topicID"))
-	t, err := service.Topic.FindByID(v.db, topicID)
+	t, err := v.topicService.FindByID(topicID)
 	if err != nil {
 		muxie.Dispatch(w, muxie.JSON, out.Err500)
 		return

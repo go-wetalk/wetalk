@@ -2,26 +2,27 @@ package service
 
 import (
 	"appsrv/model"
+	"appsrv/pkg/config"
 	"appsrv/pkg/out"
 	"appsrv/schema"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/minio/minio-go/v6"
 	"github.com/xeonx/timeago"
+	"go.uber.org/zap"
 )
 
-var Comment = new(comment)
-
-type comment struct {
-	db *pg.DB
+// Comment 评论相关DB操作
+type Comment struct {
+	db   *pg.DB
+	log  *zap.Logger
+	mc   *minio.Client
+	conf *config.ServerConfig
 }
 
-func NewCommentService() *comment {
-	return &comment{}
-}
-
-func (comment) CreateTopicComment(db *pg.DB, u model.User, input schema.TopicCommentCreation) (*model.Comment, error) {
+func (v *Comment) CreateTopicComment(u model.User, input schema.TopicCommentCreation) (*model.Comment, error) {
 	t := model.Topic{}
-	err := db.Model(&t).Where("id = ?", input.TopicID).First()
+	err := v.db.Model(&t).Where("id = ?", input.TopicID).First()
 	if err != nil {
 		return nil, out.ErrNotFound
 	}
@@ -30,7 +31,7 @@ func (comment) CreateTopicComment(db *pg.DB, u model.User, input schema.TopicCom
 	com.TopicID = input.TopicID
 	com.UserID = u.ID
 	com.Content = input.Content
-	err = db.Insert(&com)
+	err = v.db.Insert(&com)
 	if err != nil {
 		return nil, out.Err500
 	}
@@ -38,13 +39,13 @@ func (comment) CreateTopicComment(db *pg.DB, u model.User, input schema.TopicCom
 	return &com, nil
 }
 
-func (comment) FindByFilterInput(db *pg.DB, input schema.CommentFilter) (*schema.Pagination, error) {
+func (v *Comment) FindByFilterInput(input schema.CommentFilter) (*schema.Pagination, error) {
 	raw := schema.Pagination{
 		PerPage: input.Size,
 	}
 
 	cs := []model.Comment{}
-	count, err := db.Model(&cs).Relation("User").
+	count, err := v.db.Model(&cs).Relation("User").
 		Where("comment.topic_id = ?", input.TopicID).
 		Order("comment.id DESC").
 		Offset((input.Page - 1) * input.Size).Limit(input.Size).

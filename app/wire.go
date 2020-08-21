@@ -23,6 +23,7 @@ func NewUserController() runtime.Controller {
 func NewTopicController() runtime.Controller {
 	wire.Build(
 		pkg.ApplicationSet,
+		service.ServiceSet,
 		wire.Struct(new(Topic), "*"),
 		wire.Bind(new(runtime.Controller), new(*Topic)),
 	)
@@ -32,6 +33,7 @@ func NewTopicController() runtime.Controller {
 func NewTextController() runtime.Controller {
 	wire.Build(
 		pkg.ApplicationSet,
+		// service.ServiceSet,
 		wire.Struct(new(Text), "*"),
 		wire.Bind(new(runtime.Controller), new(*Text)),
 	)
@@ -41,6 +43,7 @@ func NewTextController() runtime.Controller {
 func NewTaskController() runtime.Controller {
 	wire.Build(
 		pkg.ApplicationSet,
+		// service.ServiceSet,
 		wire.Struct(new(Task), "*"),
 		wire.Bind(new(runtime.Controller), new(*Task)),
 	)
@@ -50,6 +53,7 @@ func NewTaskController() runtime.Controller {
 func NewNotificationController() runtime.Controller {
 	wire.Build(
 		pkg.ApplicationSet,
+		service.ServiceSet,
 		wire.Struct(new(Notification), "*"),
 		wire.Bind(new(runtime.Controller), new(*Notification)),
 	)
@@ -59,6 +63,7 @@ func NewNotificationController() runtime.Controller {
 func NewCommentController() runtime.Controller {
 	wire.Build(
 		pkg.ApplicationSet,
+		service.ServiceSet,
 		wire.Struct(new(Comment), "*"),
 		wire.Bind(new(runtime.Controller), new(*Comment)),
 	)
@@ -68,6 +73,7 @@ func NewCommentController() runtime.Controller {
 func NewAnnounceController() runtime.Controller {
 	wire.Build(
 		pkg.ApplicationSet,
+		// service.ServiceSet,
 		wire.Struct(new(Announce), "*"),
 		wire.Bind(new(runtime.Controller), new(*Announce)),
 	)
