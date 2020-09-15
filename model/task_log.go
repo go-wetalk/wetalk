@@ -4,7 +4,7 @@ import (
 	"appsrv/pkg/db"
 	"errors"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 )
 
 // TaskLog 任务日志
@@ -38,7 +38,8 @@ func (l *TaskLog) DispatchBonus(db *pg.DB) error {
 			Value:    l.BonusNum,
 			Balance:  bal + l.BonusNum,
 		}
-		return db.Insert(&cl)
+		_, err := db.Model(&cl).Insert()
+		return err
 	}
 	return errors.New("undefined task bonus")
 }

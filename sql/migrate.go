@@ -3,8 +3,8 @@ package sql
 import (
 	"sort"
 
-	"github.com/go-pg/pg/v9"
-	"github.com/go-pg/pg/v9/orm"
+	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/prometheus/common/log"
 	"go.uber.org/zap"
 )
@@ -48,7 +48,7 @@ func checkErr(err error) {
 
 func createTable(db *pg.DB, tables ...interface{}) {
 	for _, ptr := range tables {
-		err := db.CreateTable(ptr, &orm.CreateTableOptions{
+		err := db.Model(ptr).CreateTable(&orm.CreateTableOptions{
 			IfNotExists: true,
 		})
 		checkErr(err)
@@ -66,7 +66,8 @@ func checkV(db *pg.DB, v int) bool {
 }
 
 func updateV(db *pg.DB, v int) error {
-	return db.Insert(&version{
+	_, err := db.Model(&version{
 		Code: v,
-	})
+	}).Insert()
+	return err
 }

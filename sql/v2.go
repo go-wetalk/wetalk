@@ -3,7 +3,7 @@ package sql
 import (
 	"appsrv/pkg/db"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"go.uber.org/zap"
 )
 
@@ -14,7 +14,7 @@ func init() {
 			&user{},
 		)
 
-		db.Insert(
+		db.Model([]*rule{
 			&rule{
 				Path:        "/users",
 				Method:      "{POST}",
@@ -39,7 +39,7 @@ func init() {
 				Path:       "/status",
 				Authorized: []string{"*"},
 			},
-		)
+		}).Insert()
 
 		return nil
 	})

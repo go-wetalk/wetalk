@@ -9,7 +9,7 @@ import (
 	"appsrv/service"
 	"net/http"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"

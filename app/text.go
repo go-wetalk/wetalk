@@ -5,7 +5,7 @@ import (
 	"appsrv/pkg/config"
 	"net/http"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
@@ -40,7 +40,7 @@ func (v Text) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = v.db.Insert(&in.Text)
+	_, err = v.db.Model(&in.Text).Insert()
 	if err != nil {
 		v.log.Error("Text.Create", zap.Error(err))
 		w.WriteHeader(500)

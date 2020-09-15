@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 )
 
 type dbLogger struct{}

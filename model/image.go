@@ -4,7 +4,7 @@ import (
 	"appsrv/pkg/db"
 	"context"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 )
 
 // Image 图片资源

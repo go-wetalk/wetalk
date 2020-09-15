@@ -1,7 +1,7 @@
 package sql
 
 import (
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"go.uber.org/zap"
 )
 
@@ -12,7 +12,7 @@ func init() {
 			&siteConfig{},
 		)
 
-		db.Insert(
+		db.Model([]*siteConfig{
 			&siteConfig{
 				Key:     "domain",
 				Value:   "devto.icu",
@@ -23,7 +23,7 @@ func init() {
 				Value:   "DevToICU",
 				Comment: "社区名称",
 			},
-		)
+		}).Insert()
 
 		return nil
 	})

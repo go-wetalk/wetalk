@@ -4,7 +4,7 @@ import (
 	"appsrv/pkg/db"
 	"time"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,20 +19,21 @@ func init() {
 			&rule{},
 		)
 
-		db.Insert(
-			&role{Key: "v0", Name: "V0·超管"},
-			&role{Key: "v1", Name: "V1·用户"},
-		)
+		db.Model(
+			[]*role{
+				&role{Key: "v0", Name: "V0·超管"},
+				&role{Key: "v1", Name: "V1·用户"},
+			}).Insert()
 
 		l.Info("init table admin", zap.String("username", "admin"), zap.String("password", "admina"))
 		hash, _ := bcrypt.GenerateFromPassword([]byte("admina"), bcrypt.DefaultCost)
-		db.Insert(&admin{
+		db.Model(&admin{
 			Name:     "admin",
 			Password: string(hash),
 			RoleKeys: []string{"v0"},
-		})
+		}).Insert()
 
-		db.Insert(
+		db.Model(
 			// 游客级规则拥有最低优先级
 			&rule{
 				Host:        "*",
@@ -40,7 +41,7 @@ func init() {
 				Method:      "{HEAD,GET}",
 				AllowAnyone: true,
 			},
-		)
+		).Insert()
 
 		return nil
 	})

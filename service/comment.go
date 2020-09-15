@@ -6,7 +6,7 @@ import (
 	"appsrv/pkg/out"
 	"appsrv/schema"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/minio/minio-go/v6"
 	"github.com/xeonx/timeago"
 	"go.uber.org/zap"
@@ -31,7 +31,7 @@ func (v *Comment) CreateTopicComment(u model.User, input schema.TopicCommentCrea
 	com.TopicID = input.TopicID
 	com.UserID = u.ID
 	com.Content = input.Content
-	err = v.db.Insert(&com)
+	_, err = v.db.Model(&com).Insert()
 	if err != nil {
 		return nil, out.Err500
 	}

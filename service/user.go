@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/minio/minio-go/v6"
 	uuid "github.com/satori/go.uuid"
 	"github.com/tsdtsdtsd/identicon"
@@ -71,7 +71,7 @@ func (v *User) CreateWithInput(input schema.UserSignUpInput) (*model.User, error
 		return nil, out.Err500
 	}
 
-	err = v.db.Insert(&u)
+	_, err = v.db.Model(&u).Insert()
 	if err != nil {
 		return nil, out.Err500
 	}

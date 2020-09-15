@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/kataras/hcaptcha"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"

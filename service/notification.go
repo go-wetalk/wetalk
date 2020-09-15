@@ -6,7 +6,7 @@ import (
 	"appsrv/pkg/out"
 	"appsrv/schema"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/minio/minio-go/v6"
 	"github.com/xeonx/timeago"
 	"go.uber.org/zap"

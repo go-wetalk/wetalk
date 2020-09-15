@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/jinzhu/now"
 )
 
@@ -122,7 +122,7 @@ func (t *Task) Confirm(db *pg.DB, u *User) (*TaskLog, error) {
 		Factor:    t.Factor,
 		FactorNum: t.FactorNum,
 	}
-	err := db.Insert(&l)
+	_, err := db.Model(&l).Insert()
 	if err != nil {
 		return nil, err
 	}

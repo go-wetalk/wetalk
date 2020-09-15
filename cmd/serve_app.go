@@ -8,7 +8,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/kataras/muxie"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"

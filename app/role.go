@@ -3,7 +3,7 @@ package app
 import (
 	"appsrv/pkg/config"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/minio/minio-go/v6"
 	"go.uber.org/zap"
 )

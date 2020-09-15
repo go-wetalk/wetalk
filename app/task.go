@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cast"
@@ -45,7 +45,7 @@ func (v Task) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = v.db.Insert(&in.Task)
+	_, err = v.db.Model(&in.Task).Insert()
 	if err != nil {
 		v.log.Error("Task.Create", zap.Error(err))
 		w.WriteHeader(500)

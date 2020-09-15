@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/kataras/muxie"
 	"github.com/minio/minio-go/v6"
 	"go.uber.org/zap"
@@ -41,7 +41,7 @@ func (v Announce) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = v.db.Insert(&in.Announce)
+	_, err = v.db.Model(&in.Announce).Insert()
 	if err != nil {
 		v.log.Error("Announce.Create", zap.Error(err))
 		w.WriteHeader(500)

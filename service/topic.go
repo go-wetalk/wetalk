@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/88250/lute"
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/xeonx/timeago"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -94,7 +94,7 @@ func (v *Topic) Create(u model.User, input schema.TopicCreateInput) (*model.Topi
 		}
 	}
 
-	err := v.db.Insert(&t)
+	_, err := v.db.Model(&t).Insert()
 	return &t, err
 }
 

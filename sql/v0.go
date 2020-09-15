@@ -3,7 +3,7 @@ package sql
 import (
 	"time"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"go.uber.org/zap"
 )
 

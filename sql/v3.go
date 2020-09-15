@@ -4,7 +4,7 @@ import (
 	"appsrv/pkg/db"
 	"time"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +16,7 @@ func init() {
 			&announce{},
 		)
 
-		db.Insert(
+		db.Model([]*role{
 			&role{
 				Key:   "text",
 				Name:  "文本数据管理",
@@ -27,9 +27,9 @@ func init() {
 				Name:  "文本数据检索",
 				Intro: "检索全局文本数据",
 			},
-		)
+		}).Insert()
 
-		db.Insert(
+		db.Model([]*text{
 			&text{
 				Name:     "服务协议",
 				Slot:     1,
@@ -48,7 +48,7 @@ func init() {
 				SlotName: "guide",
 				Content:  "--terms OF privacy--",
 			},
-		)
+		}).Insert()
 
 		return nil
 	})
